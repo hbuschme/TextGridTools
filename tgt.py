@@ -42,6 +42,10 @@ class TextGrid(object):
     def add_tier(self, tier):
         """Add a tier."""
         self.tiers.append(tier)
+    
+    def insert_tier(self, tier, position):
+        """Insert a tier at the specified position."""
+        self.tiers.insert(position, tier)
         
     def has_tier(self, name):
         """Check whether TextGrid has a tier of the specified name."""
