@@ -143,6 +143,11 @@ class IntervalTier(Tier):
         return self._objects
     intervals = property(fget=get_intervals,
                 doc='The list of intervals of this tier.')
+
+    def get_intervals_with_name(self, text, n=1):
+        """Get the n first intervals with the specified text."""
+        return [x for x in self.intervals if x.text == text][:n]
+        
     
     def get_interval_by_left_bound(self, left_bound):
         """Get interval with the specified left bound (or None)."""
@@ -160,6 +165,15 @@ class IntervalTier(Tier):
                     self._objects), right_bound)
         if (index != len(self._objects) 
                     and self._objects[index].right_bound == right_bound):
+            return self._objects[index]
+        else:
+            return None
+
+    def get_interval_at_time(self, time):
+        """Get interval at the specified time (or None)."""
+        index = bisect.bisect_left(map(lambda x: x.right_bound,
+                                       self._objects), time)
+        if (index != len(self._objects)):
             return self._objects[index]
         else:
             return None
