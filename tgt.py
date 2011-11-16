@@ -47,10 +47,14 @@ class TextGrid(object):
         """Insert a tier at the specified position."""
         self.tiers.insert(position, tier)
         
+    def get_tier_names(self):
+        """Get names of all tiers."""
+        return map(lambda tier: tier.name, self.tiers)
+        
     def has_tier(self, name):
         """Check whether TextGrid has a tier of the specified name."""
-        return name in map(lambda tier: tier.name, self.tiers)
-        
+        return name in get_tier_names(self)
+    
     def get_tier_by_name(self, name):
         """Get tier of specified name name."""
         for tier in self.tiers:
