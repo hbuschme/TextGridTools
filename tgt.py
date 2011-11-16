@@ -72,6 +72,10 @@ class TextGrid(object):
         f = open(filename, 'w')
         f.write(str(self))
         f.close()
+
+    def __len__(self):
+        '''Return the number of tiers.'''
+        return len(self.tiers)
     
     def __str__(self):
         '''Return string representation of this TextGrid (in short format).'''
@@ -107,6 +111,10 @@ class Tier(object):
         """Add an interval or point to this tier."""
         if isinstance(object, type):
             self._objects.append(object)
+            if isinstance(object, Interval):
+                self.end_time = object.right_bound
+            elif isinstance(object, Point):
+                self.end_time = object.time
         else:
             raise Exception('Could not add object ' + `object` + ' to this '
                 + self.type + '.')
@@ -177,7 +185,7 @@ class IntervalTier(Tier):
             return self._objects[index]
         else:
             return None
-    
+
     def __str__(self):
         """Return string representation of this tier (in short format).
         Adds empty intervals if necessary
