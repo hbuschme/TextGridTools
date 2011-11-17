@@ -309,8 +309,9 @@ class Point(object):
 def read_textgrid(filename, encoding='utf-8'):
     '''Reads a Praat short TextGrid file and returns a TextGrid object.'''
     f = codecs.open(filename, 'r', encoding)
-    # read whole file into memory ignoring empty lines
-    stg = filter(lambda s: s != '', map(lambda s: s.strip(), f.readlines()))
+    # Read whole file into memory ignoring empty lines and lines consisting 
+    # solely of a single pair of double quotes.
+    stg = filter(lambda s: s not in ['','"'], map(lambda s: s.strip(), f.readlines()))
     f.close()
     if stg[0] != 'File type = "ooTextFile"':
         raise Exception(filename)
