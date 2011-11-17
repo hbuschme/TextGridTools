@@ -19,6 +19,8 @@
 
 from __future__ import print_function, division
 
+import copy
+
 import argparse
 import tgt
 
@@ -30,11 +32,12 @@ def parse_arguments():
                               order they should be concatenated.')
     argparser.add_argument('-o', type=str, nargs=1, required=True, dest='output_file',
                         help='Path to the resulting file.')
-    return(vars(argparser.parse_args()))
+    return vars(argparser.parse_args())
 
 def concatenate_textgrids(input_files):
-    """Concatenate Tiers with matching names in the specified input files.
-    TextGrids are concatenated in the order they are specified."""
+    """Concatenate Tiers with matching names. TextGrids are concatenated
+    in the order they are specified. The number and the names of tiers
+    must be the same in each TextGrid."""
     
     # Read all TextGrids into a list.
     textgrids = [tgt.read_short_textgrid(path) for path in input_files]
@@ -56,12 +59,12 @@ def concatenate_textgrids(input_files):
         for tier in textgrid.tiers:
             intervals = []
 
-            # If this is the first we see this tier, we just take
-            # it as it is
+            # If this is the first we see this tier, we just make a copy
+            # of it as it is.
             if tier.name not in tiers.keys():
-                tiers[tier.name] = tier
+                tiers[tier.name] = copy.deepcopy(tier)
             # Otherwise we update the start and end times of intervals
-            # and append them to original one.
+            # and append them to the first part.
             else:
                 for interval in tier.intervals:
                     interval.left_bound += tot_duration
@@ -72,7 +75,7 @@ def concatenate_textgrids(input_files):
 
     # Create a new TextGrid
     textgrid_concatenated = tgt.TextGrid()
-    # Add tiers in the order they're specified in the first TextGrid.
+    # Add tiers in the order they're found in the first TextGrid.
     textgrid_concatenated.add_tiers([tiers[x] for x in textgrids[0].get_tier_names()])
     return textgrid_concatenated
 
@@ -80,7 +83,7 @@ def main():
     # Parse the command-line arguments.
     args = parse_arguments()
     textgrid_concatenated = concatenate_textgrids(args['input_files'])
-    # Write the concatenated TextGrid to the specified file.
+    # Write the concatenated TextGrid to a file.
     outfile = open(args['output_file'][0], 'w')
     outfile.write(str(textgrid_concatenated))
     outfile.close()
