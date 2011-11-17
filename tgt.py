@@ -20,10 +20,11 @@
 from __future__ import division
 import bisect
 import codecs
+import re
 
 __all__ = [
     'TextGrid', 'IntervalTier', 'Interval', 'PointTier', 'Point',
-    'read_short_textgrid', 'write_short_textgrid'
+    'read_textgrid', 'read_short_textgrid', 'read_long_textgrid', 'write_short_textgrid'
 ]
 
 
@@ -305,17 +306,53 @@ class Point(object):
 ##  Functions for reading TextGrid files in the 'short' format.
 ##----------------------------------------------------------------------------
 
-def read_short_textgrid(filename, encoding='utf-8'):
+def read_textgrid(filename, encoding='utf-8'):
     '''Reads a Praat short TextGrid file and returns a TextGrid object.'''
     f = codecs.open(filename, 'r', encoding)
     # read whole file into memory ignoring empty lines
-    stg = filter(lambda s: s != '', map(lambda s: s[0:-1], f.readlines()))
+    stg = filter(lambda s: s != '', map(lambda s: s.strip(), f.readlines()))
     f.close()
-    tg = TextGrid(filename)
     if stg[0] != 'File type = "ooTextFile"':
         raise Exception(filename)
     if stg[1] != 'Object class = "TextGrid"':
         raise Exception(filename)
+    # Determine the TextGrid format.
+    if stg[2].startswith('xmin'):
+        return read_long_textgrid(filename, stg)
+    else:
+        return read_short_textgrid(filename, stg)
+
+def read_short_textgrid(filename, stg):
+    '''Reads a Praat short TextGrid file and returns a TextGrid object.'''
+
+    def read_interval_tier(stg_extract):
+        '''Reads and returns an IntervalTier from a short TextGrid.'''
+        name = stg_extract[1].strip('"') # name w/o quotes
+        start_time = float(stg_extract[2])
+        end_time = float(stg_extract[3])
+        it = IntervalTier(start_time, end_time, name)
+        i = 5
+        while i < len(stg_extract):
+            it.add_interval(Interval(float(stg_extract[i]), # left bound
+                float(stg_extract[i+1]),                    # right bound 
+                stg_extract[i+2].strip('"')))               # text w/o quotes
+            i += 3
+        return it
+
+    def read_point_tier(stg_extract):
+        '''Reads and returns a PointTier (called TextTier) from a short TextGrid.'''    
+        name = stg_extract[1].strip('"') # name w/o quotes
+        start_time = float(stg_extract[2])
+        end_time = float(stg_extract[3])
+        pt = PointTier(start_time, end_time, name)
+        i = 5
+        while i < len(stg_extract):
+            pt.add_point(Point(float(stg_extract[i]), # time
+                stg_extract[i+1].strip('"')))         # text w/o quotes
+            i += 2
+        return pt
+
+    tg = TextGrid(filename)
     read_start_time = float(stg[2])
     read_end_time = float(stg[3])
     if stg[4] != '<exists>':
@@ -334,34 +371,61 @@ def read_short_textgrid(filename, encoding='utf-8'):
             raise Exception('Unknown tier type: {0}'.format(stg[index]))
     return tg
 
+
+def read_long_textgrid(filename, stg):
+    '''Reads a Praat long TextGrid file and returns a TextGrid object.'''
+
+    def get_attr_val(x):
+        """Extracts the attribute value from a long TextGrid line."""
+        return x.split(' = ')[1]
+
+    def read_interval_tier(stg_extract):
+        '''Reads and returns an IntervalTier from a long TextGrid.'''
+        name = get_attr_val(stg_extract[2])[1:-1] # name w/o quotes
+        start_time = float(get_attr_val(stg_extract[3]))
+        end_time = float(get_attr_val(stg_extract[4]))
+        it = IntervalTier(start_time, end_time, name)
+        i = 7
+        while i < len(stg_extract):
+            it.add_interval(Interval(float(get_attr_val(stg_extract[i])), # left bound
+                float(get_attr_val(stg_extract[i+1])),                    # right bound 
+                get_attr_val(stg_extract[i+2])[1:-1]))                    # text w/o quotes
+            i += 4
+        return it
+
+    def read_point_tier(stg_extract):
+        '''Reads and returns a PointTier (called TextTier) from a long TextGrid.'''    
+        name = get_attr_val(stg_extract[1])[1:-1] # name w/o quotes
+        start_time = float(get_attr_val(stg_extract[3]))
+        end_time = float(get_attr_val(stg_extract[4]))
+        pt = PointTier(start_time, end_time, name)
+        i = 7
+        while i < len(stg_extract):
+            pt.add_point(Point(float(get_attr_val(stg_extract[i])), # time
+                get_attr_val(stg_extract[i+1])[1:-1]))              # text w/o quotes
+            i += 3
+        return pt
+
+    tg = TextGrid(filename)
+    read_start_time = float(get_attr_val(stg[2]))
+    read_end_time = float(get_attr_val(stg[3]))
+    if stg[4].split()[1] != '<exists>':
+        raise Exception(filename)
+    read_no_of_tiers = get_attr_val(stg[5])
+    index = 7
+    while index < len(stg):
+        num_obj  = int(get_attr_val(stg[index+5]))
+        if get_attr_val(stg[index+1]) == '"IntervalTier"':
+            tg.add_tier(read_interval_tier(stg[index:index+6+num_obj*4]))
+            index += 6 + (num_obj * 4)
+        elif get_attr_val(stg[index+1]) == '"TextTier"':
+            tg.add_tier(read_point_tier(stg[index:index+6+num_obj*3]))
+            index += 6 + (num_obj * 3)
+        else:
+            raise Exception('Unknown tier type: {0}'.format(stg[index]))
+    return tg
+
+
 def write_short_textgrid(textgrid, filename, encoding):
     '''Writes a TextGrid object to a Praat short TextGrid file.'''
     textgrid.write_to_file(filename, encoding)
-
-def read_interval_tier(stg_extract):
-    '''Reads and returns an IntervalTier.'''
-    name = stg_extract[1][1:-1] # name w/o quotes
-    start_time = float(stg_extract[2])
-    end_time = float(stg_extract[3])
-    it = IntervalTier(start_time, end_time, name)
-    i = 5
-    while i < len(stg_extract):
-        it.add_interval(Interval(float(stg_extract[i]), # left bound
-            float(stg_extract[i+1]),                    # right bound 
-            stg_extract[i+2][1:-1]))                    # text w/o quotes
-        i += 3
-    return it
-
-def read_point_tier(stg_extract):
-    '''Reads and returns a PointTier (called TextTier).'''    
-    name = stg_extract[1][1:-1] # name w/o quotes
-    start_time = float(stg_extract[2])
-    end_time = float(stg_extract[3])
-    pt = PointTier(start_time, end_time, name)
-    i = 5
-    while i < len(stg_extract):
-        pt.add_point(Point(float(stg_extract[i]), # time
-            stg_extract[i+1][1:-1]))              # text w/o quotes
-        i += 2
-    return pt
-
