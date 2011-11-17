@@ -42,7 +42,7 @@ def concatenate_textgrids(input_files, encoding):
     must be the same in each TextGrid."""
     
     # Read all TextGrids into a list.
-    textgrids = [tgt.read_short_textgrid(path, encoding) for path in input_files]
+    textgrids = [tgt.read_textgrid(path, encoding) for path in input_files]
 
     # Check whether the TextGrids have the same number of tiers.
     ntiers = [len(x) for x in textgrids]
