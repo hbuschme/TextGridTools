@@ -26,7 +26,7 @@ import tgt
 
 def parse_arguments():
     """Parse the command-line arguments."""
-    argparser = argparse.ArgumentParser(description='Read input and output files.')
+    argparser = argparse.ArgumentParser(description='Concatenate Praat TextGrid files.')
     argparser.add_argument('-i', type=str, nargs='+', required=True, dest='input_files',
                         help='Space-separated list of paths to TextGrid files in the\
                               order they should be concatenated.')
