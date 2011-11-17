@@ -19,6 +19,7 @@
 
 from __future__ import division
 import bisect
+import codecs
 
 __all__ = [
     'TextGrid', 'IntervalTier', 'Interval', 'PointTier', 'Point',
@@ -71,10 +72,10 @@ class TextGrid(object):
         '''Return the latest end time among all tiers.'''
         return max(map(lambda t: t.end_time, self.tiers))
     
-    def write_to_file(self, filename):
+    def write_to_file(self, filename, encoding='utf-8'):
         '''Writes textgrid to a Praat short TextGrid file.'''
-        f = open(filename, 'w')
-        f.write(str(self))
+        f = codecs.open(filename, 'w', encoding)
+        f.write(unicode(self))
         f.close()
 
     def __len__(self):
@@ -92,7 +93,7 @@ class TextGrid(object):
             '<exists>',
             len(self.tiers)
         ]
-        return '\n'.join(map(str, header + self.tiers))
+        return '\n'.join(map(unicode, header + self.tiers))
     
 
 class Tier(object):
@@ -129,10 +130,10 @@ class Tier(object):
     
     def __str__(self):
         """Return string representation of this tier (in short format)."""
-        w = lambda x: '"' + str(x) + '"'
+        w = lambda x: '"' + unicode(x) + '"'
         tier_header = [w(self.type), w(self.name),
                     self.start_time, self.end_time, len(self)]
-        return '\n'.join(map(str, tier_header + self._objects))
+        return '\n'.join(map(unicode, tier_header + self._objects))
     
 
 class IntervalTier(Tier):
@@ -213,17 +214,17 @@ class IntervalTier(Tier):
             if obj.left_bound > last_right_bound:
                 # insert empty interval
                 empty_interval = Interval(last_right_bound, obj.left_bound)
-                result += str(empty_interval) + '\n'
+                result += unicode(empty_interval) + '\n'
                 additional_intervals += 1
-            result += str(obj) + '\n'
+            result += unicode(obj) + '\n'
             last_right_bound = obj.right_bound
         if self.end_time > last_right_bound:
             # insert empty interval at the end (if necessary)
             empty_interval = Interval(last_right_bound, self.end_time)
-            result += str(empty_interval) + '\n'
+            result += unicode(empty_interval) + '\n'
             additional_intervals += 1
-        w = lambda x: '"' + str(x) + '"'
-        tier_header = '\n'.join(map(str, [w(self.type), w(self.name), self.start_time,
+        w = lambda x: '"' + unicode(x) + '"'
+        tier_header = '\n'.join(map(unicode, [w(self.type), w(self.name), self.start_time,
                     self.end_time, len(self) + additional_intervals]))
         return tier_header + '\n' + result
     
@@ -277,10 +278,10 @@ class Interval(object):
                     and self.text == other.text)
     
     def __repr__(self):
-        return 'Interval({0}, {1}, "{2}")'.format(self.left_bound, self.right_bound, self.text)
+        return u'Interval({0}, {1}, "{2}")'.format(self.left_bound, self.right_bound, self.text)
     
     def __str__(self):
-        return '{0}\n{1}\n"{2}"'.format(self.left_bound, self.right_bound, self.text)
+        return u'{0}\n{1}\n"{2}"'.format(self.left_bound, self.right_bound, self.text)
     
 
 class Point(object):
@@ -295,18 +296,18 @@ class Point(object):
         return self.time == other.time and self.text == other.text
     
     def __repr__(self):
-        return 'Point({0}, "{1}")'.format(self.time, self.text)
+        return u'Point({0}, "{1}")'.format(self.time, self.text)
     
     def __str__(self):
-        return '{0}\n"{1}"'.format(self.time, self.text)
+        return u'{0}\n"{1}"'.format(self.time, self.text)
     
 
 ##  Functions for reading TextGrid files in the 'short' format.
 ##----------------------------------------------------------------------------
 
-def read_short_textgrid(filename):
+def read_short_textgrid(filename, encoding='utf-8'):
     '''Reads a Praat short TextGrid file and returns a TextGrid object.'''
-    f = open(filename, 'r')
+    f = codecs.open(filename, 'r', encoding)
     # read whole file into memory ignoring empty lines
     stg = filter(lambda s: s != '', map(lambda s: s[0:-1], f.readlines()))
     f.close()
@@ -333,9 +334,9 @@ def read_short_textgrid(filename):
             raise Exception('Unknown tier type: {0}'.format(stg[index]))
     return tg
 
-def write_short_textgrid(textgrid, filename):
+def write_short_textgrid(textgrid, filename, encoding):
     '''Writes a TextGrid object to a Praat short TextGrid file.'''
-    textgrid.write_to_file(filename)
+    textgrid.write_to_file(filename, encoding)
 
 def read_interval_tier(stg_extract):
     '''Reads and returns an IntervalTier.'''
