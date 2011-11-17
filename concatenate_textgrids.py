@@ -84,9 +84,7 @@ def main():
     args = parse_arguments()
     textgrid_concatenated = concatenate_textgrids(args['input_files'])
     # Write the concatenated TextGrid to a file.
-    outfile = open(args['output_file'][0], 'w')
-    outfile.write(str(textgrid_concatenated))
-    outfile.close()
+    textgrid_concatenated.write_to_file(args['output_file'][0])
 
 if __name__ == '__main__':
     main()
