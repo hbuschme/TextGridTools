@@ -32,15 +32,17 @@ def parse_arguments():
                               order they should be concatenated.')
     argparser.add_argument('-o', type=str, nargs=1, required=True, dest='output_file',
                         help='Path to the resulting file.')
+    argparser.add_argument('-e', type=str, nargs=1, dest='encoding', default='utf-8',
+                        help='File encoding (defaults to UTF-8).')
     return vars(argparser.parse_args())
 
-def concatenate_textgrids(input_files):
+def concatenate_textgrids(input_files, encoding):
     """Concatenate Tiers with matching names. TextGrids are concatenated
     in the order they are specified. The number and the names of tiers
     must be the same in each TextGrid."""
     
     # Read all TextGrids into a list.
-    textgrids = [tgt.read_short_textgrid(path) for path in input_files]
+    textgrids = [tgt.read_short_textgrid(path, encoding) for path in input_files]
 
     # Check whether the TextGrids have the same number of tiers.
     ntiers = [len(x) for x in textgrids]
@@ -82,9 +84,9 @@ def concatenate_textgrids(input_files):
 def main():
     # Parse the command-line arguments.
     args = parse_arguments()
-    textgrid_concatenated = concatenate_textgrids(args['input_files'])
+    textgrid_concatenated = concatenate_textgrids(args['input_files'], args['encoding'][0])
     # Write the concatenated TextGrid to a file.
-    textgrid_concatenated.write_to_file(args['output_file'][0])
+    textgrid_concatenated.write_to_file(args['output_file'][0], args['encoding'][0])
 
 if __name__ == '__main__':
     main()
