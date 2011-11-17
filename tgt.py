@@ -190,6 +190,18 @@ class IntervalTier(Tier):
         else:
             return None
 
+    def get_intervals_between_timepoints(self, start, end):
+        """Get all intervals enclosed between start and end."""
+        index_lo = bisect.bisect_left(map(lambda x: x.left_bound,
+                                          self._objects), start)
+        index_hi = bisect.bisect_right(map(lambda x: x.right_bound,
+                                           self._objects), end)
+
+        if (index_lo != len(self._objects)):
+            return self._objects[index_lo:index_hi]
+        else:
+            return None
+
     def __str__(self):
         """Return string representation of this tier (in short format).
         Adds empty intervals if necessary
