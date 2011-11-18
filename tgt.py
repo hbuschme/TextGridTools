@@ -19,10 +19,12 @@
 
 from __future__ import division
 import bisect
+import codecs
+import re
 
 __all__ = [
     'TextGrid', 'IntervalTier', 'Interval', 'PointTier', 'Point',
-    'read_short_textgrid', 'write_short_textgrid'
+    'read_textgrid', 'read_short_textgrid', 'read_long_textgrid', 'write_short_textgrid'
 ]
 
 
@@ -47,10 +49,14 @@ class TextGrid(object):
         """Insert a tier at the specified position."""
         self.tiers.insert(position, tier)
         
+    def get_tier_names(self):
+        """Get names of all tiers."""
+        return map(lambda tier: tier.name, self.tiers)
+        
     def has_tier(self, name):
         """Check whether TextGrid has a tier of the specified name."""
-        return name in map(lambda tier: tier.name, self.tiers)
-        
+        return name in get_tier_names(self)
+    
     def get_tier_by_name(self, name):
         """Get tier of specified name name."""
         for tier in self.tiers:
@@ -67,11 +73,15 @@ class TextGrid(object):
         '''Return the latest end time among all tiers.'''
         return max(map(lambda t: t.end_time, self.tiers))
     
-    def write_to_file(self, filename):
+    def write_to_file(self, filename, encoding='utf-8'):
         '''Writes textgrid to a Praat short TextGrid file.'''
-        f = open(filename, 'w')
-        f.write(str(self))
+        f = codecs.open(filename, 'w', encoding)
+        f.write(unicode(self))
         f.close()
+
+    def __len__(self):
+        '''Return the number of tiers.'''
+        return len(self.tiers)
     
     def __str__(self):
         '''Return string representation of this TextGrid (in short format).'''
@@ -84,7 +94,7 @@ class TextGrid(object):
             '<exists>',
             len(self.tiers)
         ]
-        return '\n'.join(map(str, header + self.tiers))
+        return '\n'.join(map(unicode, header + self.tiers))
     
 
 class Tier(object):
@@ -107,6 +117,10 @@ class Tier(object):
         """Add an interval or point to this tier."""
         if isinstance(object, type):
             self._objects.append(object)
+            if isinstance(object, Interval):
+                self.end_time = object.right_bound
+            elif isinstance(object, Point):
+                self.end_time = object.time
         else:
             raise Exception('Could not add object ' + `object` + ' to this '
                 + self.type + '.')
@@ -117,10 +131,10 @@ class Tier(object):
     
     def __str__(self):
         """Return string representation of this tier (in short format)."""
-        w = lambda x: '"' + str(x) + '"'
+        w = lambda x: '"' + unicode(x) + '"'
         tier_header = [w(self.type), w(self.name),
                     self.start_time, self.end_time, len(self)]
-        return '\n'.join(map(str, tier_header + self._objects))
+        return '\n'.join(map(unicode, tier_header + self._objects))
     
 
 class IntervalTier(Tier):
@@ -177,7 +191,19 @@ class IntervalTier(Tier):
             return self._objects[index]
         else:
             return None
-    
+
+    def get_intervals_between_timepoints(self, start, end):
+        """Get all intervals enclosed between start and end."""
+        index_lo = bisect.bisect_left(map(lambda x: x.left_bound,
+                                          self._objects), start)
+        index_hi = bisect.bisect_right(map(lambda x: x.right_bound,
+                                           self._objects), end)
+
+        if (index_lo != len(self._objects)):
+            return self._objects[index_lo:index_hi]
+        else:
+            return None
+
     def __str__(self):
         """Return string representation of this tier (in short format).
         Adds empty intervals if necessary
@@ -189,17 +215,17 @@ class IntervalTier(Tier):
             if obj.left_bound > last_right_bound:
                 # insert empty interval
                 empty_interval = Interval(last_right_bound, obj.left_bound)
-                result += str(empty_interval) + '\n'
+                result += unicode(empty_interval) + '\n'
                 additional_intervals += 1
-            result += str(obj) + '\n'
+            result += unicode(obj) + '\n'
             last_right_bound = obj.right_bound
         if self.end_time > last_right_bound:
             # insert empty interval at the end (if necessary)
             empty_interval = Interval(last_right_bound, self.end_time)
-            result += str(empty_interval) + '\n'
+            result += unicode(empty_interval) + '\n'
             additional_intervals += 1
-        w = lambda x: '"' + str(x) + '"'
-        tier_header = '\n'.join(map(str, [w(self.type), w(self.name), self.start_time,
+        w = lambda x: '"' + unicode(x) + '"'
+        tier_header = '\n'.join(map(unicode, [w(self.type), w(self.name), self.start_time,
                     self.end_time, len(self) + additional_intervals]))
         return tier_header + '\n' + result
     
@@ -253,10 +279,10 @@ class Interval(object):
                     and self.text == other.text)
     
     def __repr__(self):
-        return 'Interval({0}, {1}, "{2}")'.format(self.left_bound, self.right_bound, self.text)
+        return u'Interval({0}, {1}, "{2}")'.format(self.left_bound, self.right_bound, self.text)
     
     def __str__(self):
-        return '{0}\n{1}\n"{2}"'.format(self.left_bound, self.right_bound, self.text)
+        return u'{0}\n{1}\n"{2}"'.format(self.left_bound, self.right_bound, self.text)
     
 
 class Point(object):
@@ -271,26 +297,63 @@ class Point(object):
         return self.time == other.time and self.text == other.text
     
     def __repr__(self):
-        return 'Point({0}, "{1}")'.format(self.time, self.text)
+        return u'Point({0}, "{1}")'.format(self.time, self.text)
     
     def __str__(self):
-        return '{0}\n"{1}"'.format(self.time, self.text)
+        return u'{0}\n"{1}"'.format(self.time, self.text)
     
 
 ##  Functions for reading TextGrid files in the 'short' format.
 ##----------------------------------------------------------------------------
 
-def read_short_textgrid(filename):
+def read_textgrid(filename, encoding='utf-8'):
     '''Reads a Praat short TextGrid file and returns a TextGrid object.'''
-    f = open(filename, 'r')
-    # read whole file into memory ignoring empty lines
-    stg = filter(lambda s: s != '', map(lambda s: s[0:-1], f.readlines()))
+    f = codecs.open(filename, 'r', encoding)
+    # Read whole file into memory ignoring empty lines and lines consisting 
+    # solely of a single pair of double quotes.
+    stg = filter(lambda s: s not in ['','"'], map(lambda s: s.strip(), f.readlines()))
     f.close()
-    tg = TextGrid(filename)
     if stg[0] != 'File type = "ooTextFile"':
         raise Exception(filename)
     if stg[1] != 'Object class = "TextGrid"':
         raise Exception(filename)
+    # Determine the TextGrid format.
+    if stg[2].startswith('xmin'):
+        return read_long_textgrid(filename, stg)
+    else:
+        return read_short_textgrid(filename, stg)
+
+def read_short_textgrid(filename, stg):
+    '''Reads a Praat short TextGrid file and returns a TextGrid object.'''
+
+    def read_interval_tier(stg_extract):
+        '''Reads and returns an IntervalTier from a short TextGrid.'''
+        name = stg_extract[1].strip('"') # name w/o quotes
+        start_time = float(stg_extract[2])
+        end_time = float(stg_extract[3])
+        it = IntervalTier(start_time, end_time, name)
+        i = 5
+        while i < len(stg_extract):
+            it.add_interval(Interval(float(stg_extract[i]), # left bound
+                float(stg_extract[i+1]),                    # right bound 
+                stg_extract[i+2].strip('"')))               # text w/o quotes
+            i += 3
+        return it
+
+    def read_point_tier(stg_extract):
+        '''Reads and returns a PointTier (called TextTier) from a short TextGrid.'''    
+        name = stg_extract[1].strip('"') # name w/o quotes
+        start_time = float(stg_extract[2])
+        end_time = float(stg_extract[3])
+        pt = PointTier(start_time, end_time, name)
+        i = 5
+        while i < len(stg_extract):
+            pt.add_point(Point(float(stg_extract[i]), # time
+                stg_extract[i+1].strip('"')))         # text w/o quotes
+            i += 2
+        return pt
+
+    tg = TextGrid(filename)
     read_start_time = float(stg[2])
     read_end_time = float(stg[3])
     if stg[4] != '<exists>':
@@ -309,34 +372,61 @@ def read_short_textgrid(filename):
             raise Exception('Unknown tier type: {0}'.format(stg[index]))
     return tg
 
-def write_short_textgrid(textgrid, filename):
+
+def read_long_textgrid(filename, stg):
+    '''Reads a Praat long TextGrid file and returns a TextGrid object.'''
+
+    def get_attr_val(x):
+        """Extracts the attribute value from a long TextGrid line."""
+        return x.split(' = ')[1]
+
+    def read_interval_tier(stg_extract):
+        '''Reads and returns an IntervalTier from a long TextGrid.'''
+        name = get_attr_val(stg_extract[2])[1:-1] # name w/o quotes
+        start_time = float(get_attr_val(stg_extract[3]))
+        end_time = float(get_attr_val(stg_extract[4]))
+        it = IntervalTier(start_time, end_time, name)
+        i = 7
+        while i < len(stg_extract):
+            it.add_interval(Interval(float(get_attr_val(stg_extract[i])), # left bound
+                float(get_attr_val(stg_extract[i+1])),                    # right bound 
+                get_attr_val(stg_extract[i+2])[1:-1]))                    # text w/o quotes
+            i += 4
+        return it
+
+    def read_point_tier(stg_extract):
+        '''Reads and returns a PointTier (called TextTier) from a long TextGrid.'''    
+        name = get_attr_val(stg_extract[1])[1:-1] # name w/o quotes
+        start_time = float(get_attr_val(stg_extract[3]))
+        end_time = float(get_attr_val(stg_extract[4]))
+        pt = PointTier(start_time, end_time, name)
+        i = 7
+        while i < len(stg_extract):
+            pt.add_point(Point(float(get_attr_val(stg_extract[i])), # time
+                get_attr_val(stg_extract[i+1])[1:-1]))              # text w/o quotes
+            i += 3
+        return pt
+
+    tg = TextGrid(filename)
+    read_start_time = float(get_attr_val(stg[2]))
+    read_end_time = float(get_attr_val(stg[3]))
+    if stg[4].split()[1] != '<exists>':
+        raise Exception(filename)
+    read_no_of_tiers = get_attr_val(stg[5])
+    index = 7
+    while index < len(stg):
+        num_obj  = int(get_attr_val(stg[index+5]))
+        if get_attr_val(stg[index+1]) == '"IntervalTier"':
+            tg.add_tier(read_interval_tier(stg[index:index+6+num_obj*4]))
+            index += 6 + (num_obj * 4)
+        elif get_attr_val(stg[index+1]) == '"TextTier"':
+            tg.add_tier(read_point_tier(stg[index:index+6+num_obj*3]))
+            index += 6 + (num_obj * 3)
+        else:
+            raise Exception('Unknown tier type: {0}'.format(stg[index]))
+    return tg
+
+
+def write_short_textgrid(textgrid, filename, encoding):
     '''Writes a TextGrid object to a Praat short TextGrid file.'''
-    textgrid.write_to_file(filename)
-
-def read_interval_tier(stg_extract):
-    '''Reads and returns an IntervalTier.'''
-    name = stg_extract[1][1:-1] # name w/o quotes
-    start_time = float(stg_extract[2])
-    end_time = float(stg_extract[3])
-    it = IntervalTier(start_time, end_time, name)
-    i = 5
-    while i < len(stg_extract):
-        it.add_interval(Interval(float(stg_extract[i]), # left bound
-            float(stg_extract[i+1]),                    # right bound 
-            stg_extract[i+2][1:-1]))                    # text w/o quotes
-        i += 3
-    return it
-
-def read_point_tier(stg_extract):
-    '''Reads and returns a PointTier (called TextTier).'''    
-    name = stg_extract[1][1:-1] # name w/o quotes
-    start_time = float(stg_extract[2])
-    end_time = float(stg_extract[3])
-    pt = PointTier(start_time, end_time, name)
-    i = 5
-    while i < len(stg_extract):
-        pt.add_point(Point(float(stg_extract[i]), # time
-            stg_extract[i+1][1:-1]))              # text w/o quotes
-        i += 2
-    return pt
-
+    textgrid.write_to_file(filename, encoding)
