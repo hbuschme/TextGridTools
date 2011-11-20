@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 # TextGridTools -- Read, write, and manipulate Praat TextGrid files
-# Copyright (C) 2011 Hendrik Buschmeier
+# Copyright (C) 2011 Hendrik Buschmeier, Marcin Włodarczak
 # 
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
