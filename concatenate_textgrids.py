@@ -84,9 +84,9 @@ def concatenate_textgrids(input_files, encoding):
 def main():
     # Parse the command-line arguments.
     args = parse_arguments()
-    textgrid_concatenated = concatenate_textgrids(args['input_files'], args['encoding'][0])
+    textgrid_concatenated = concatenate_textgrids(args['input_files'], args['encoding'])
     # Write the concatenated TextGrid to a file.
-    textgrid_concatenated.write_to_file(args['output_file'][0], args['encoding'][0])
+    textgrid_concatenated.write_to_file(args['output_file'][0], args['encoding'])
 
 if __name__ == '__main__':
     main()
