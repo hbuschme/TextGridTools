@@ -20,7 +20,6 @@
 from __future__ import division
 import bisect
 import codecs
-import re
 
 __all__ = [
     'TextGrid', 'IntervalTier', 'Interval', 'PointTier', 'Point',
@@ -307,7 +306,7 @@ class Point(object):
 ##----------------------------------------------------------------------------
 
 def read_textgrid(filename, encoding='utf-8'):
-    '''Reads a Praat short TextGrid file and returns a TextGrid object.'''
+    '''Reads a Praat TextGrid file and returns a TextGrid object.'''
     f = codecs.open(filename, 'r', encoding)
     # Read whole file into memory ignoring empty lines and lines consisting 
     # solely of a single pair of double quotes.
