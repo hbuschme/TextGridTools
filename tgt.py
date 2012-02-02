@@ -122,7 +122,7 @@ class Tier(object):
             elif isinstance(object, Point):
                 self.end_time = object.time
         else:
-            raise Exception('Could not add object ' + `object` + ' to this '
+            raise Exception('Could not add object ' + repr(object) + ' to this '
                 + self.type + '.')
     
     def __len__(self):
