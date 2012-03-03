@@ -41,11 +41,17 @@ class TextGrid(object):
             self.add_tier(tier)
         
     def add_tier(self, tier):
-        """Add a tier."""
+        """Add a tier. Update end times of existing tiers if necessary."""
+        if self.tiers and tier.end_time > self.end_time():
+            for existing_tier in self.tiers:
+                existing_tier.end_time = tier.end_time
         self.tiers.append(tier)
-    
+
     def insert_tier(self, tier, position):
-        """Insert a tier at the specified position."""
+        """Insert a tier at the specified position. Update end times of existing tiers if necessary."""
+        if self.tiers and tier.end_time > self.end_time():
+            for existing_tier in self.tiers:
+                existing_tier.end_time = tier.end_time
         self.tiers.insert(position, tier)
         
     def get_tier_names(self):
@@ -121,7 +127,7 @@ class Tier(object):
             elif isinstance(object, Point):
                 self.end_time = object.time
         else:
-            raise Exception('Could not add object ' + `object` + ' to this '
+            raise Exception('Could not add object ' + repr(object) + ' to this '
                 + self.type + '.')
     
     def __len__(self):
