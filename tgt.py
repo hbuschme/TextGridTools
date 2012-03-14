@@ -43,11 +43,11 @@ class TextGrid(object):
         
     def add_tier(self, tier):
         """Add a tier."""
-        self.tiers.append(tier)
+        self.tiers.append(copy.deepcopy(tier))
 
     def insert_tier(self, tier, position):
         """Insert a tier at the specified position."""
-        self.tiers.insert(position, tier)
+        self.tiers.insert(position, copy.deepcopy(tier))
         
     def get_tier_names(self):
         """Get names of all tiers."""
@@ -73,6 +73,15 @@ class TextGrid(object):
         '''Return the latest end time among all tiers.'''
         return max(map(lambda t: t.end_time, self.tiers))
 
+    def _update_end_times(self):
+        for tier in self.tiers:
+            if isinstance(tier, IntervalTier):
+                # Insert final empty interval (if necessary).
+                if tier.end_time < self.end_time():
+                    empty_interval = Interval(tier.end_time, self.end_time(), '')
+                    tier._add_object(empty_interval, Interval)
+            tier.end_time = self.end_time()
+
     def write_to_file(self, filename, encoding='utf-8'):
         '''Writes textgrid to a Praat short TextGrid file.'''
         f = codecs.open(filename, 'w', encoding)
@@ -94,17 +103,10 @@ class TextGrid(object):
             '<exists>',
             len(self.tiers)
         ]
-        # Make copies of tiers with matching end times and (for interval tiers)
-        # with emtpy intervals inserted.
-        tiers_new = []
-        for tier in self.tiers:
-            if isinstance(tier, IntervalTier):
-                tier_new = tier.add_empty_intervals(self.end_time())
-            else:
-                tier_new = copy.copy(tier)
-                tier_new.end_time = self.end_time()
-            tiers_new.append(tier_new)
-        return '\n'.join(map(unicode, header + tiers_new))
+        # Update tiers' end times and (for interval tiers) insert the final empty
+        # interval if necessary.
+        self._update_end_times()
+        return '\n'.join(map(unicode, header + self.tiers))
     
 
 class Tier(object):
@@ -126,11 +128,15 @@ class Tier(object):
     def _add_object(self, object, type):
         """Add an interval or point to this tier."""
         if isinstance(object, type):
-            self._objects.append(object)
             if isinstance(object, Interval):
+                if self.end_time < object.left_bound:
+                    # Add an empty interval (if necessary).
+                    empty_interval = Interval(self.end_time, object.left_bound, '')
+                    self._objects.append(empty_interval)
                 self.end_time = object.right_bound
             elif isinstance(object, Point):
                 self.end_time = object.time
+            self._objects.append(object)
         else:
             raise Exception('Could not add object ' + repr(object) + ' to this '
                 + self.type + '.')
