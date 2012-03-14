@@ -20,6 +20,7 @@
 from __future__ import division
 import bisect
 import codecs
+import copy
 
 __all__ = [
     'TextGrid', 'IntervalTier', 'Interval', 'PointTier', 'Point',
@@ -41,17 +42,11 @@ class TextGrid(object):
             self.add_tier(tier)
         
     def add_tier(self, tier):
-        """Add a tier. Update end times of existing tiers if necessary."""
-        if self.tiers and tier.end_time > self.end_time():
-            for existing_tier in self.tiers:
-                existing_tier.end_time = tier.end_time
+        """Add a tier."""
         self.tiers.append(tier)
 
     def insert_tier(self, tier, position):
-        """Insert a tier at the specified position. Update end times of existing tiers if necessary."""
-        if self.tiers and tier.end_time > self.end_time():
-            for existing_tier in self.tiers:
-                existing_tier.end_time = tier.end_time
+        """Insert a tier at the specified position."""
         self.tiers.insert(position, tier)
         
     def get_tier_names(self):
@@ -77,7 +72,7 @@ class TextGrid(object):
     def end_time(self):
         '''Return the latest end time among all tiers.'''
         return max(map(lambda t: t.end_time, self.tiers))
-    
+
     def write_to_file(self, filename, encoding='utf-8'):
         '''Writes textgrid to a Praat short TextGrid file.'''
         f = codecs.open(filename, 'w', encoding)
@@ -99,7 +94,17 @@ class TextGrid(object):
             '<exists>',
             len(self.tiers)
         ]
-        return '\n'.join(map(unicode, header + self.tiers))
+        # Make copies of tiers with matching end times and (for interval tiers)
+        # with emtpy intervals inserted.
+        tiers_new = []
+        for tier in self.tiers:
+            if isinstance(tier, IntervalTier):
+                tier_new = tier.add_empty_intervals(self.end_time())
+            else:
+                tier_new = copy.copy(tier)
+                tier_new.end_time = self.end_time()
+            tiers_new.append(tier_new)
+        return '\n'.join(map(unicode, header + tiers_new))
     
 
 class Tier(object):
@@ -221,31 +226,26 @@ class IntervalTier(Tier):
         else:
             return None
 
-    def __str__(self):
-        """Return string representation of this tier (in short format).
-        Adds empty intervals if necessary
-        """
-        result = ''
+    def add_empty_intervals(self, end_time=None):
+        """Return a copy of this tier with empty intervals inserted."""
+        # Make end_time default to self.end_time
+        if end_time is None:
+            end_time = self.end_time
+        result = IntervalTier(self.start_time, end_time, self.name)
         last_right_bound = self.start_time
         additional_intervals = 0 
         for obj in self._objects:
             if obj.left_bound > last_right_bound:
                 # insert empty interval
                 empty_interval = Interval(last_right_bound, obj.left_bound)
-                result += unicode(empty_interval) + '\n'
-                additional_intervals += 1
-            result += unicode(obj) + '\n'
+                result.add_interval(empty_interval)
+            result.add_interval(obj)
             last_right_bound = obj.right_bound
-        if self.end_time > last_right_bound:
+        if end_time > last_right_bound:
             # insert empty interval at the end (if necessary)
-            empty_interval = Interval(last_right_bound, self.end_time)
-            result += unicode(empty_interval) + '\n'
-            additional_intervals += 1
-        w = lambda x: '"' + unicode(x) + '"'
-        tier_header = '\n'.join(map(unicode, [w(self.type), w(self.name), self.start_time,
-                    self.end_time, len(self) + additional_intervals]))
-        return tier_header + '\n' + result
-    
+            empty_interval = Interval(last_right_bound, end_time)
+            result.add_interval(empty_interval)
+        return result
 
 class PointTier(Tier):
     '''A PointTier (also "TextTier").'''
