@@ -76,7 +76,7 @@ class TextGrid(object):
     def _update_end_times(self):
         for tier in self.tiers:
             if isinstance(tier, IntervalTier):
-                # Insert final empty interval (if necessary).
+                # Insert the final empty interval (if necessary).
                 if tier.end_time < self.end_time():
                     empty_interval = Interval(tier.end_time, self.end_time(), '')
                     tier._add_object(empty_interval, Interval)
@@ -121,12 +121,14 @@ class Tier(object):
         self.type = 'UnknownTier'
     
     def _add_objects(self, objects, type=None):
-        """Add a list of intervals or a list of points to this tier."""
+        """Add a list of intervals or a list of points to this tier.
+        For interval tiers insert empty intervals if necessary."""
         for obj in objects:
             self._add_object(obj, type)
     
     def _add_object(self, object, type):
-        """Add an interval or point to this tier."""
+        """Add an interval or point to this tier. For intervals tiers
+        insert an empty interval if necessary."""
         if isinstance(object, type):
             if isinstance(object, Interval):
                 if self.end_time < object.left_bound:
@@ -165,11 +167,13 @@ class IntervalTier(Tier):
         self._add_objects(intervals, Interval)
         
     def add_interval(self, interval):
-        """Add an interval to this tier."""
+        """Add an interval to this tier. Insert an empty interval if
+        necessary."""
         self._add_object(interval, Interval)
     
     def get_intervals(self):
-        """Get all intervals of this tier."""
+        """Get all intervals of this tier. Insert empty intervals if
+        necessary."""
         return self._objects
     intervals = property(fget=get_intervals,
                 doc='The list of intervals of this tier.')
