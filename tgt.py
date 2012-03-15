@@ -121,8 +121,7 @@ class Tier(object):
         self.type = 'UnknownTier'
     
     def _add_objects(self, objects, type=None):
-        """Add a list of intervals or a list of points to this tier.
-        For interval tiers insert empty intervals if necessary."""
+        """Add a list of intervals or a list of points to this tier."""
         for obj in objects:
             self._add_object(obj, type)
     
