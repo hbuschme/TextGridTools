@@ -69,10 +69,14 @@ class TextGrid(object):
     def start_time(self):
         '''Return the earliest start time among all tiers.'''
         return min(map(lambda t: t.start_time, self.tiers))
+    start_time = property(fget=start_time,
+                          doc='TextGrid start time.')
         
     def end_time(self):
         '''Return the latest end time among all tiers.'''
         return max(map(lambda t: t.end_time, self.tiers))
+    end_time = property(fget=end_time,
+                        doc='TextGrid end time.')
 
     def write_to_file(self, filename, encoding='utf-8'):
         '''Writes textgrid to a Praat short TextGrid file.'''
