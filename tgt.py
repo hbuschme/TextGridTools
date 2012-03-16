@@ -209,37 +209,37 @@ class IntervalTier(Tier):
 
     def get_interval_at_time(self, time):
         """Get interval at the specified time (or None)."""
-        index = bisect.bisect_left(map(lambda x: x.right_bound,
-                                       self._objects), time)
+        index = bisect.bisect_right(map(lambda x: x.right_bound,
+                                        self._objects), time)
         if (index != len(self._objects)):
             return self._objects[index]
         else:
             return None
 
-    def get_intervals_between_timepoints(self, start, end):
-        """Get all intervals enclosed between start and end."""
-        index_lo = bisect.bisect_left(map(lambda x: x.left_bound,
-                                          self._objects), start)
-        index_hi = bisect.bisect_right(map(lambda x: x.right_bound,
-                                           self._objects), end)
+    def get_intervals_between_timepoints(self, start, end, left_overlap=False, right_overlap=False):
+        """Get intervals between start and end. If left_overlap or
+        right_overlap is False (the default) intervals overlapping
+        with start or end are excluded."""
 
-        if (index_lo != len(self._objects)):
+        if left_overlap:
+            index_lo = bisect.bisect_right(map(lambda x: x.right_bound,
+                                               self._objects), start)
+        else:
+            index_lo = bisect.bisect_left(map(lambda x: x.left_bound,
+                                              self._objects), start)
+
+        if right_overlap:
+            index_hi = bisect.bisect_left(map(lambda x: x.left_bound,
+                                              self._objects), end)
+        else:
+            index_hi = bisect.bisect_right(map(lambda x: x.right_bound,
+                                               self._objects), end)
+
+        if (index_lo != len(self._objects)) and index_lo != index_hi:
             return self._objects[index_lo:index_hi]
         else:
             return None
     
-    def get_overlapping_intervals(self, start, end):
-        """Get all intervals overlapping with the interval (start, end)."""
-        index_lo = bisect.bisect_right(map(lambda x: x.right_bound,
-                                           self._objects), start)
-        index_hi = bisect.bisect_left(map(lambda x: x.left_bound,
-                                          self._objects), end)
-
-        if (index_lo != len(self._objects)):
-            return self._objects[index_lo:index_hi]
-        else:
-            return None
-
     def add_empty_intervals(self, end_time=None):
         """Return a copy of this tier with empty intervals inserted."""
         
