@@ -43,11 +43,11 @@ class TextGrid(object):
         
     def add_tier(self, tier):
         """Add a tier."""
-        self.tiers.append(copy.deepcopy(tier))
+        self.tiers.append(tier)
 
     def insert_tier(self, tier, position):
         """Insert a tier at the specified position."""
-        self.tiers.insert(position, copy.deepcopy(tier))
+        self.tiers.insert(position, tier)
         
     def get_tier_names(self):
         """Get names of all tiers."""
@@ -73,15 +73,6 @@ class TextGrid(object):
         '''Return the latest end time among all tiers.'''
         return max(map(lambda t: t.end_time, self.tiers))
 
-    def _update_end_times(self):
-        for tier in self.tiers:
-            if isinstance(tier, IntervalTier):
-                # Insert the final empty interval (if necessary).
-                if tier.end_time < self.end_time():
-                    empty_interval = Interval(tier.end_time, self.end_time(), '')
-                    tier._add_object(empty_interval, Interval)
-            tier.end_time = self.end_time()
-
     def write_to_file(self, filename, encoding='utf-8'):
         '''Writes textgrid to a Praat short TextGrid file.'''
         f = codecs.open(filename, 'w', encoding)
@@ -91,6 +82,16 @@ class TextGrid(object):
     def __len__(self):
         '''Return the number of tiers.'''
         return len(self.tiers)
+
+    def _update_end_times(self):
+        
+        for tier in self.tiers:
+            if isinstance(tier, IntervalTier):
+                # Insert the final empty interval (if necessary).
+                if tier.end_time < self.end_time():
+                    empty_interval = Interval(tier.end_time, self.end_time(), '')
+                    tier._add_object(empty_interval, Interval)
+            tier.end_time = self.end_time()
     
     def __str__(self):
         '''Return string representation of this TextGrid (in short format).'''
@@ -103,10 +104,12 @@ class TextGrid(object):
             '<exists>',
             len(self.tiers)
         ]
-        # Update tiers' end times and (for interval tiers) insert the final empty
-        # interval if necessary.
-        self._update_end_times()
-        return '\n'.join(map(unicode, header + self.tiers))
+        # Make a copy of the textgrid, update tiers' end times and
+        # (for interval tiers) insert the final empty interval if
+        # necessary.
+        textgrid_copy = copy.deepcopy(self)
+        textgrid_copy._update_end_times()
+        return '\n'.join(map(unicode, header + textgrid_copy.tiers))
     
 
 class Tier(object):
