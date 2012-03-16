@@ -22,6 +22,7 @@ import bisect
 import codecs
 import copy
 import math
+import re
 
 __all__ = [
     'TextGrid', 'IntervalTier', 'Interval', 'PointTier', 'Point',
@@ -243,6 +244,27 @@ class IntervalTier(Tier):
             return self._objects[index_lo:index_hi]
         else:
             return None
+
+    def get_overlapping_intervals(self, other, text=r'[^\s]+'):
+        """Return a list of overlaps between intervals of self and
+        other matching the regular expression. All nonempty intervals
+        are included by default."""
+        intervals1 = self.intervals
+        intervals2 = other.intervals
+        overlaps = []
+        i, j = 0, 0
+        while i < len(self) and j < len(other):
+            lo = max(intervals1[i].left_bound, intervals2[j].left_bound)
+            hi = min(intervals1[i].right_bound, intervals2[j].right_bound)
+            if (lo < hi and re.search(text, intervals1[i].text)
+                and re.search(text, intervals2[j].text)):
+                overlaps.append(Interval(lo, hi, 'overlap'))
+            if intervals1[i].right_bound < intervals2[j].right_bound:
+                i += 1
+            else:
+                j += 1
+        return overlaps
+                
     
     def add_empty_intervals(self, end_time=None):
         """Return a copy of this tier with empty intervals inserted."""
