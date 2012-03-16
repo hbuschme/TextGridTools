@@ -88,11 +88,11 @@ class TextGrid(object):
         """Modify the end times of Intervals to self.end_time() and (for interval tiers)
         add the final empty intervals if necessary."""
         for tier in self.tiers:
-            if isinstance(tier, IntervalTier):
-                # Insert the final empty interval (if necessary).
-                if not times_equal_with_precision(tier.end_time, self.end_time()) and tier.end_time < self.end_time():
-                    empty_interval = Interval(tier.end_time, self.end_time(), '')
-                    tier._add_object(empty_interval, Interval)
+            if isinstance(tier, IntervalTier) and tier.end_time < self.end_time():
+                # For interval tiers insert the final empty interval
+                # if necessary.
+                empty_interval = Interval(tier.end_time, self.end_time(), '')
+                tier._add_object(empty_interval, Interval)
             tier.end_time = self.end_time()
     
     def __str__(self):
@@ -120,8 +120,8 @@ class Tier(object):
     def __init__(self, start_time=0, end_time=0, name=''):
         super(Tier, self).__init__()
         self._objects = []
-        self.start_time = start_time
-        self.end_time = end_time
+        self.start_time = Time(start_time)
+        self.end_time = Time(end_time)
         self.name = name
         self.type = 'UnknownTier'
     
@@ -135,7 +135,7 @@ class Tier(object):
         insert an empty interval if necessary."""
         if isinstance(object, type):
             if isinstance(object, Interval):
-                if not times_equal_with_precision(self.end_time, object.left_bound) and self.end_time < object.left_bound:
+                if self.end_time < object.left_bound:
                     # Add an empty interval (if necessary).
                     empty_interval = Interval(self.end_time, object.left_bound, '')
                     self._objects.append(empty_interval)
@@ -163,7 +163,7 @@ class IntervalTier(Tier):
     '''An IntervalTier.'''
     
     def __init__(self, start_time=0, end_time=0, name=''):
-        super(IntervalTier, self).__init__(start_time, end_time, name)
+        super(IntervalTier, self).__init__(Time(start_time), Time(end_time), name)
         self.type = 'IntervalTier'
     
     def add_intervals(self, intervals):
@@ -242,15 +242,14 @@ class IntervalTier(Tier):
 
     def add_empty_intervals(self, end_time=None):
         """Return a copy of this tier with empty intervals inserted."""
+        
         # Make end_time default to self.end_time
-        if end_time is None:
-            end_time = self.end_time
+        end_time = self.end_time if end_time is None else Time(end_time)
         result = IntervalTier(self.start_time, end_time, self.name)
         last_right_bound = self.start_time
         additional_intervals = 0 
         for obj in self._objects:
-            # obj.left_bound > last_right_bound:
-            if not times_equal_with_precision(obj.left_bound, last_right_bound) and obj.left_bound > last_right_bound:
+            if obj.left_bound > last_right_bound:
                 # insert empty interval
                 empty_interval = Interval(last_right_bound, obj.left_bound)
                 result.add_interval(empty_interval)
@@ -266,7 +265,7 @@ class PointTier(Tier):
     '''A PointTier (also "TextTier").'''
     
     def __init__(self, start_time=0, end_time=0, name=''):
-        super(PointTier, self).__init__(start_time, end_time, name)
+        super(PointTier, self).__init__(Time(start_time), Time(end_time), name)
         self.type = 'TextTier'
     
     def add_points(self, points):
@@ -297,8 +296,8 @@ class Interval(object):
     
     def __init__(self, left_bound, right_bound, text=''):
         super(Interval, self).__init__()
-        self.left_bound = left_bound
-        self.right_bound = right_bound
+        self.left_bound = Time(left_bound)
+        self.right_bound = Time(right_bound)
         self.text = text.strip()
     
     def duration(self):
@@ -322,7 +321,7 @@ class Point(object):
     
     def __init__(self, time, text):
         super(Point, self).__init__()
-        self.time = time
+        self.time = Time(time)
         self.text = text.strip()
     
     def __eq__(self, other):
@@ -335,7 +334,7 @@ class Point(object):
         return u'{0}\n"{1}"'.format(self.time, self.text)
 
 class Time(float):
-    '''A representation of point of time with a predefined precision.'''
+    '''A representation of point in time with a predefined precision.'''
 
     _precision = 0.0001
 
@@ -386,33 +385,33 @@ def read_short_textgrid(filename, stg):
     def read_interval_tier(stg_extract):
         '''Reads and returns an IntervalTier from a short TextGrid.'''
         name = stg_extract[1].strip('"') # name w/o quotes
-        start_time = float(stg_extract[2])
-        end_time = float(stg_extract[3])
+        start_time = Time(stg_extract[2])
+        end_time = Time(stg_extract[3])
         it = IntervalTier(start_time, end_time, name)
         i = 5
         while i < len(stg_extract):
-            it.add_interval(Interval(float(stg_extract[i]), # left bound
-                float(stg_extract[i+1]),                    # right bound 
-                stg_extract[i+2].strip('"')))               # text w/o quotes
+            it.add_interval(Interval(Time(stg_extract[i]), # left bound
+                Time(stg_extract[i+1]),                    # right bound 
+                stg_extract[i+2].strip('"')))              # text w/o quotes
             i += 3
         return it
 
     def read_point_tier(stg_extract):
         '''Reads and returns a PointTier (called TextTier) from a short TextGrid.'''    
         name = stg_extract[1].strip('"') # name w/o quotes
-        start_time = float(stg_extract[2])
-        end_time = float(stg_extract[3])
+        start_time = stg_extract[2]
+        end_time = stg_extract[3]
         pt = PointTier(start_time, end_time, name)
         i = 5
         while i < len(stg_extract):
-            pt.add_point(Point(float(stg_extract[i]), # time
-                stg_extract[i+1].strip('"')))         # text w/o quotes
+            pt.add_point(Point(stg_extract[i], # time
+                stg_extract[i+1].strip('"')))  # text w/o quotes
             i += 2
         return pt
 
     tg = TextGrid(filename)
-    read_start_time = float(stg[2])
-    read_end_time = float(stg[3])
+    read_start_time = stg[2]
+    read_end_time = stg[3]
     if stg[4] != '<exists>':
         raise Exception(filename)
     read_no_of_tiers = stg[5]
@@ -440,33 +439,33 @@ def read_long_textgrid(filename, stg):
     def read_interval_tier(stg_extract):
         '''Reads and returns an IntervalTier from a long TextGrid.'''
         name = get_attr_val(stg_extract[2])[1:-1] # name w/o quotes
-        start_time = float(get_attr_val(stg_extract[3]))
-        end_time = float(get_attr_val(stg_extract[4]))
+        start_time = get_attr_val(stg_extract[3])
+        end_time = get_attr_val(stg_extract[4])
         it = IntervalTier(start_time, end_time, name)
         i = 7
         while i < len(stg_extract):
-            it.add_interval(Interval(float(get_attr_val(stg_extract[i])), # left bound
-                float(get_attr_val(stg_extract[i+1])),                    # right bound 
-                get_attr_val(stg_extract[i+2])[1:-1]))                    # text w/o quotes
+            it.add_interval(Interval(get_attr_val(stg_extract[i]), # left bound
+                get_attr_val(stg_extract[i+1]),                    # right bound 
+                get_attr_val(stg_extract[i+2])[1:-1]))             # text w/o quotes
             i += 4
         return it
 
     def read_point_tier(stg_extract):
         '''Reads and returns a PointTier (called TextTier) from a long TextGrid.'''    
         name = get_attr_val(stg_extract[1])[1:-1] # name w/o quotes
-        start_time = float(get_attr_val(stg_extract[3]))
-        end_time = float(get_attr_val(stg_extract[4]))
+        start_time = get_attr_val(stg_extract[3])
+        end_time = get_attr_val(stg_extract[4])
         pt = PointTier(start_time, end_time, name)
         i = 7
         while i < len(stg_extract):
-            pt.add_point(Point(float(get_attr_val(stg_extract[i])), # time
+            pt.add_point(Point(get_attr_val(stg_extract[i]), # time
                 get_attr_val(stg_extract[i+1])[1:-1]))              # text w/o quotes
             i += 3
         return pt
 
     tg = TextGrid(filename)
-    read_start_time = float(get_attr_val(stg[2]))
-    read_end_time = float(get_attr_val(stg[3]))
+    read_start_time = get_attr_val(stg[2])
+    read_end_time = get_attr_val(stg[3])
     if stg[4].split()[1] != '<exists>':
         raise Exception(filename)
     read_no_of_tiers = get_attr_val(stg[5])
