@@ -21,6 +21,7 @@ from __future__ import division
 import bisect
 import codecs
 import copy
+import math
 
 __all__ = [
     'TextGrid', 'IntervalTier', 'Interval', 'PointTier', 'Point',
@@ -89,7 +90,7 @@ class TextGrid(object):
         for tier in self.tiers:
             if isinstance(tier, IntervalTier):
                 # Insert the final empty interval (if necessary).
-                if tier.end_time < self.end_time():
+                if not times_equal_with_precision(tier.end_time, self.end_time()) and tier.end_time < self.end_time():
                     empty_interval = Interval(tier.end_time, self.end_time(), '')
                     tier._add_object(empty_interval, Interval)
             tier.end_time = self.end_time()
@@ -134,7 +135,7 @@ class Tier(object):
         insert an empty interval if necessary."""
         if isinstance(object, type):
             if isinstance(object, Interval):
-                if self.end_time < object.left_bound:
+                if not times_equal_with_precision(self.end_time, object.left_bound) and self.end_time < object.left_bound:
                     # Add an empty interval (if necessary).
                     empty_interval = Interval(self.end_time, object.left_bound, '')
                     self._objects.append(empty_interval)
@@ -248,13 +249,14 @@ class IntervalTier(Tier):
         last_right_bound = self.start_time
         additional_intervals = 0 
         for obj in self._objects:
-            if obj.left_bound > last_right_bound:
+            # obj.left_bound > last_right_bound:
+            if not times_equal_with_precision(obj.left_bound, last_right_bound) and obj.left_bound > last_right_bound:
                 # insert empty interval
                 empty_interval = Interval(last_right_bound, obj.left_bound)
                 result.add_interval(empty_interval)
             result.add_interval(obj)
             last_right_bound = obj.right_bound
-        if end_time > last_right_bound:
+        if not times_equal_with_precision(end_time, last_right_bound) and end_time > last_right_bound:
             # insert empty interval at the end (if necessary)
             empty_interval = Interval(last_right_bound, end_time)
             result.add_interval(empty_interval)
@@ -331,8 +333,33 @@ class Point(object):
     
     def __str__(self):
         return u'{0}\n"{1}"'.format(self.time, self.text)
-    
 
+class Time(float):
+    '''A representation of point of time with a predefined precision.'''
+
+    _precision = 0.0001
+
+    def __eq__(self, other):
+        return math.fabs(self - other) < self._precision
+
+    def __ne__(self, other):
+        return math.fabs(self - other) > self._precision
+
+    def __gt__(self, other):
+        return self != other and self - other > 0
+
+    def __lt__(self, other):
+        return self != other and self - other < 0
+
+    def __ge__(self, other):
+        return self == other or self > other
+
+    def __le__(self, other):
+        return self == other or self < other
+
+
+
+                 
 ##  Functions for reading TextGrid files in the 'short' format.
 ##----------------------------------------------------------------------------
 
@@ -460,3 +487,6 @@ def read_long_textgrid(filename, stg):
 def write_short_textgrid(textgrid, filename, encoding):
     '''Writes a TextGrid object to a Praat short TextGrid file.'''
     textgrid.write_to_file(filename, encoding)
+
+
+
