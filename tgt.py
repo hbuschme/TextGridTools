@@ -84,7 +84,8 @@ class TextGrid(object):
         return len(self.tiers)
 
     def _update_end_times(self):
-        
+        """Modify the end times of Intervals to self.end_time() and (for interval tiers)
+        add the final empty intervals if necessary."""
         for tier in self.tiers:
             if isinstance(tier, IntervalTier):
                 # Insert the final empty interval (if necessary).
