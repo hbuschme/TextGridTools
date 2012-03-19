@@ -517,4 +517,29 @@ def write_short_textgrid(textgrid, filename, encoding):
     textgrid.write_to_file(filename, encoding)
 
 
+def produce_aligned_labels_lists(tiers_list, regex=r'[^\s]+'):
+    '''Creates a list of lists of labels matching the specified
+    regular expression from time-aligned intervals of the input
+    interval tiers.'''
+    # TODO: needs testing.
+    if not tiers_list:
+        Exception('The input list is empty.')
+    elif any([not x.isinstance(IntervalTier) for x in tiers_list]):
+        TypeError('Not an IntervalTier')
+    elif set([len(x.intervals) for x in l]) > 1:
+        Exception('The numbers of intervals do not match')
+    labels_aligned = []
+    for intervals in itertools.izip(*[x.intervals for x in tiers_list]):
+        left_bounds = [x.left_bound for x in intervals]
+        right_bounds = [x.right_bound for x in intervals]
+        labels = [x.text for x in intervals]
+        if any([not re.search(regex, x) for x in labels]):
+            # Only go on if labels of all intervals match the regex.
+            continue
+        elif (left_bounds.count(left_bounds[0]) != len(left_bounds)
+              or right_bounds.count(right_bounds[0]) != len(right_bounds)):
+            Exception('Times of boundaries do not match')
+        else:
+            labels.append(intervals)
+    return itertools.izip(*intervals)
 
