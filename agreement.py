@@ -90,28 +90,33 @@ def scott_pi(a):
 # ----------------------------------------------------------
 
 
-def two_by_two_table(l1, l2):
-    """Returns a 2 by 2 contingency table given two lists of labels."""
-    if len(l1) != len(l2):
-        Exception('The numbers of labels differ.')
+def two_raters_table(l):
+    """Returns a contingency table for two raters given a list of
+    zipped labels."""
+    sublists_lengths = [len(x) for x in l]
+    if any([x != 2 for x in sublists_lengths]):
+        Exception('The length of sublists must be equal to 2')
+    if sublists_lengths.count(sublists_lengths[0]) != len(sublists_lengths):
+        Exception('The lengths of sublists differ.')
     # List of unique labels from both lists.
-    categories = list(set(l1 + l2))
+    categories = list(set(itertools.chain(*l)))
     # Dictionary translating labels into consecutive integers.
     trans = dict([(categories[x], x) for x in range(len(categories))])
     cont_table = np.zeros([len(categories), len(categories)])
-    for labels in zip(l1, l2):
+    for labels in l:
         cont_table[trans[labels[0]], trans[labels[1]]] += 1
     return cont_table
 
-def n_by_m_table(l):
-    """Returns a contingency table with categories in columns and
-    items in rows given a list of lists of labels."""
-    if len(l) < 2:
-        Exception('The number of lists to compare must be at least 2')
-    elif set([len(x) for x in l]) > 1:
-        Exception('The numbers of labels differ')
+def n_raters_table(l):
+    """Returns a contingency table for n >= 2 raters (with categories
+    in columns and items in rows) given a list of zipped labels."""
+    sublists_lengths = [len(x) for x in l]
+    if any([x < 2 for x in sublists_lengths]):
+        Exception('The length of sublists must be at least 2')
+    if sublists_lengths.count(sublists_lengths[0]) != len(sublists_lengths):
+        Exception('The lengths of sublists differ')
     # List of unique labels from all lists.
     categories = list(set(itertools.chain(*l)))
-    cont_table = np.array([x.count(y) for x in zip(*l) for y in categories])
-    cont_table.shape = (len(l[0]), len(categories))
+    cont_table = np.array([x.count(y) for x in l for y in categories])
+    cont_table.shape = (sublists_lengths[0], len(categories))
     return cont_table
