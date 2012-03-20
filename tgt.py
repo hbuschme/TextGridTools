@@ -249,6 +249,9 @@ class IntervalTier(Tier):
         """Return a list of overlaps between intervals of self and
         other matching the regular expression. All nonempty intervals
         are included in the search by default."""
+
+        if not isinstance(other, IntervalTier):
+            raise TypeError('Argument is not an IntervalTier')
         intervals1 = self.intervals
         intervals2 = other.intervals
         overlaps = []
