@@ -67,16 +67,16 @@ class TextGrid(object):
         raise ValueError('Textgrid ' + self. filename +
                     ' does not have a tier called "' + name + '".')
         
-    def start_time(self):
+    def earliest_start_time(self):
         '''Return the earliest start time among all tiers.'''
         return min(map(lambda t: t.start_time, self.tiers))
-    start_time = property(fget=start_time,
+    start_time = property(fget=earliest_start_time,
                           doc='TextGrid start time.')
         
-    def end_time(self):
+    def latest_end_time(self):
         '''Return the latest end time among all tiers.'''
         return max(map(lambda t: t.end_time, self.tiers))
-    end_time = property(fget=end_time,
+    end_time = property(fget=latest_end_time,
                         doc='TextGrid end time.')
 
     def write_to_file(self, filename, encoding='utf-8'):
@@ -90,15 +90,15 @@ class TextGrid(object):
         return len(self.tiers)
 
     def _update_end_times(self):
-        """Modify the end times of Intervals to self.end_time() and (for interval tiers)
+        """Modify the end times of Intervals to self.end_time and (for interval tiers)
         add the final empty intervals if necessary."""
         for tier in self.tiers:
-            if isinstance(tier, IntervalTier) and tier.end_time < self.end_time():
+            if isinstance(tier, IntervalTier) and tier.end_time < self.end_time:
                 # For interval tiers insert the final empty interval
                 # if necessary.
-                empty_interval = Interval(tier.end_time, self.end_time(), '')
+                empty_interval = Interval(tier.end_time, self.end_time, '')
                 tier._add_object(empty_interval, Interval)
-            tier.end_time = self.end_time()
+            tier.end_time = self.end_time
     
     def __str__(self):
         '''Return string representation of this TextGrid (in short format).'''
@@ -106,8 +106,8 @@ class TextGrid(object):
             'File type = "ooTextFile"',
             'Object class = "TextGrid"',
             '',
-            self.start_time(),
-            self.end_time(),
+            self.start_time,
+            self.end_time,
             '<exists>',
             len(self.tiers)
         ]
