@@ -540,6 +540,6 @@ def produce_aligned_labels_lists(tiers_list, regex=r'[^\s]+'):
               or right_bounds.count(right_bounds[0]) != len(right_bounds)):
             Exception('Times of boundaries do not match')
         else:
-            labels.append(intervals)
-    return itertools.izip(*intervals)
+            labels_aligned.append(intervals)
+    return labels_aligned
 
