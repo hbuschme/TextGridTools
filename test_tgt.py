@@ -65,92 +65,79 @@ class TestTime(unittest.TestCase):
 class TestIntervalTier(unittest.TestCase):
 
     def setUp(self):
-        self.interval1 = tgt.IntervalTier(name='interval_tier1')
-        self.interval1.add_intervals([tgt.Interval(0, 0.5, ''),
-                                      tgt.Interval(0.5, 2.5, 'a'),
-                                      tgt.Interval(2.5, 3.5, 'b'),
-                                      tgt.Interval(3.5, 5, ''),
-                                      tgt.Interval(5, 6, 'c'),
-                                      tgt.Interval(6, 7.5, ''),
-                                      tgt.Interval(7.5, 9, 'd')])
-        self.interval2 = tgt.IntervalTier(name='interval_tier2')
-        self.interval2.add_intervals([tgt.Interval(0, 0.7, 'e'),
-                                      tgt.Interval(0.7, 2.5, 'f'),
-                                      tgt.Interval(2.5, 3.5, ''),
-                                      tgt.Interval(3.5, 6, 'g'),
-                                      tgt.Interval(6, 7, ''),
-                                      tgt.Interval(7, 11, 'i')])
+        self.interval_tier1 = tgt.IntervalTier(name='interval_tier1')
+        self.intervals1 = [tgt.Interval(0, 0.5, ''),
+                           tgt.Interval(0.5, 2.5, 'a'),
+                           tgt.Interval(2.5, 3.5, 'b'),
+                           tgt.Interval(3.5, 5, ''),
+                           tgt.Interval(5, 6, 'c')]
+        self.interval_tier1.add_intervals(self.intervals1)
+        self.interval_tier2 = tgt.IntervalTier(name='interval_tier2',)
+        self.intervals2 = [tgt.Interval(0, 0.7, 'e'),
+                           tgt.Interval(0.7, 2.5, ''),
+                           tgt.Interval(2.5, 3.5, 'f'),
+                           tgt.Interval(3.5, 6, ''),
+                           tgt.Interval(6, 7, 'g'),
+                           tgt.Interval(7, 11, 'h')]
+        self.interval_tier2.add_intervals(self.intervals2)
         
-
-        
-                     
-
     def test_get_interval_by_left_bound(self):
-        self.assertTrue(self.interval1.get_interval_by_left_bound(0.5) == tgt.Interval(0.5, 2.5, 'a'))
-        self.assertTrue(self.interval1.get_interval_by_left_bound(2.5) == tgt.Interval(2.5, 3.5, 'b'))
-        self.assertTrue(self.interval1.get_interval_by_left_bound(7) is None)
-        self.assertTrue(self.interval1.get_interval_by_left_bound(9) is None)
+        self.assertTrue(self.interval_tier1.get_interval_by_left_bound(-1) is None)
+        self.assertTrue(self.interval_tier1.get_interval_by_left_bound(0) == self.intervals1[0])
+        self.assertTrue(self.interval_tier1.get_interval_by_left_bound(1) is None)
+        self.assertTrue(self.interval_tier1.get_interval_by_left_bound(2.5) == self.intervals1[2])
+        self.assertTrue(self.interval_tier1.get_interval_by_left_bound(6) is None)
+        self.assertTrue(self.interval_tier1.get_interval_by_left_bound(7) is None)
 
     def test_get_interval_by_right_bound(self):
-        self.assertTrue(self.interval1.get_interval_by_right_bound(2.5) == tgt.Interval(0.5, 2.5, 'a'))
-        self.assertTrue(self.interval1.get_interval_by_right_bound(3.5) == tgt.Interval(2.5, 3.5, 'b'))
-        self.assertTrue(self.interval1.get_interval_by_right_bound(7) is None)
-        self.assertTrue(self.interval1.get_interval_by_right_bound(9) == tgt.Interval(7.5, 9, 'd'))
+        self.assertTrue(self.interval_tier1.get_interval_by_right_bound(-1) is None)
+        self.assertTrue(self.interval_tier1.get_interval_by_right_bound(0) is None)
+        self.assertTrue(self.interval_tier1.get_interval_by_right_bound(1) is None)
+        self.assertTrue(self.interval_tier1.get_interval_by_right_bound(2.5) == self.intervals1[1])
+        self.assertTrue(self.interval_tier1.get_interval_by_right_bound(6) is self.intervals1[4])
+        self.assertTrue(self.interval_tier1.get_interval_by_right_bound(7) is None)
 
     def test_get_interval_at_time(self):
-        self.assertTrue(self.interval1.get_interval_at_time(1) == tgt.Interval(0.5, 2.5, 'a'))
-        self.assertTrue(self.interval1.get_interval_at_time(2.5) == tgt.Interval(2.5, 3.5, 'b'))
-        self.assertTrue(self.interval1.get_interval_at_time(7) == tgt.Interval(6, 7.5, ''))
-        self.assertTrue(self.interval1.get_interval_at_time(9) is None)
-        self.assertTrue(self.interval1.get_interval_at_time(10) is None)
+        self.assertTrue(self.interval_tier1.get_interval_at_time(-1) is None)
+        self.assertTrue(self.interval_tier1.get_interval_at_time(0) == self.intervals1[0])
+        self.assertTrue(self.interval_tier1.get_interval_at_time(1) == self.intervals1[1])
+        self.assertTrue(self.interval_tier1.get_interval_at_time(2.5) == self.intervals1[2])
+        self.assertTrue(self.interval_tier1.get_interval_at_time(6) is None)
+        self.assertTrue(self.interval_tier1.get_interval_at_time(7) is None)
 
     def test_get_intervals_between_timepoints(self):
-        self.assertTrue(self.interval1.get_intervals_between_timepoints(-2, 0) is None)
-        self.assertTrue(self.interval1.get_intervals_between_timepoints(-2, 0.25) is None)
-        self.assertTrue(
-            self.interval1.get_intervals_between_timepoints(0.5, 3.5) == [tgt.Interval(0.5, 2.5, 'a'),
-                                                                          tgt.Interval(2.5, 3.5, 'b')])
-        self.assertTrue(self.interval1.get_intervals_between_timepoints(0.5, 3) == [tgt.Interval(0.5, 2.5,'a')])
-        self.assertTrue(self.interval1.get_intervals_between_timepoints(2, 3) is None)
-        self.assertTrue(
-            self.interval1.get_intervals_between_timepoints(0.5, 4) == [tgt.Interval(0.5, 2.5, 'a'),
-                                                                        tgt.Interval(2.5, 3.5, 'b')])
-        self.assertTrue(self.interval1.get_intervals_between_timepoints(8, 11) is None)
-        self.assertTrue(self.interval1.get_intervals_between_timepoints(9, 11) is None)
-        self.assertTrue(self.interval1.get_intervals_between_timepoints(10, 11) is None)
+        self.assertTrue(self.interval_tier1.get_intervals_between_timepoints(-2, 0) == [])
+        self.assertTrue(self.interval_tier1.get_intervals_between_timepoints(-2, 0, True, True) == [])
+        self.assertTrue(self.interval_tier1.get_intervals_between_timepoints(-2, 0.25) == [])
+        self.assertTrue(self.interval_tier1.get_intervals_between_timepoints(-2, 0.25, True, True) == [self.intervals1[0]])
+        self.assertTrue(self.interval_tier1.get_intervals_between_timepoints(-2, 0.25, True, False) == [])
+        self.assertTrue(self.interval_tier1.get_intervals_between_timepoints(-2, 0.25, False, True) == [self.intervals1[0]])
+        self.assertTrue(self.interval_tier1.get_intervals_between_timepoints(0.5, 3.5) == self.intervals1[1:3])
+        self.assertTrue(self.interval_tier1.get_intervals_between_timepoints(0.5, 3.5, True, True) == self.intervals1[1:3])
+        self.assertTrue(self.interval_tier1.get_intervals_between_timepoints(1, 4) == [self.intervals1[2]])
+        self.assertTrue(self.interval_tier1.get_intervals_between_timepoints(1, 4, False, True) == self.intervals1[2:4])
+        self.assertTrue(self.interval_tier1.get_intervals_between_timepoints(1, 4, True, False) == self.intervals1[1:3])
+        self.assertTrue(self.interval_tier1.get_intervals_between_timepoints(1, 4, True, True) == self.intervals1[1:4])
+        self.assertTrue(self.interval_tier1.get_intervals_between_timepoints(4, 4.5) == []) 
+        self.assertTrue(self.interval_tier1.get_intervals_between_timepoints(4, 4.5, True, False) == [])
+        self.assertTrue(self.interval_tier1.get_intervals_between_timepoints(4, 4.5, False, True) == [])
+        self.assertTrue(self.interval_tier1.get_intervals_between_timepoints(4, 4.5, True, True) == [self.intervals1[3]])
+        self.assertTrue(self.interval_tier1.get_intervals_between_timepoints(5.5, 7) == [])
+        self.assertTrue(self.interval_tier1.get_intervals_between_timepoints(5.5, 7, True, False) == [self.intervals1[-1]])
+        self.assertTrue(self.interval_tier1.get_intervals_between_timepoints(5.5, 7, False, True) == [])
+        self.assertTrue(self.interval_tier1.get_intervals_between_timepoints(5.5, 7, True, True) == [self.intervals1[-1]])
+        self.assertTrue(self.interval_tier1.get_intervals_between_timepoints(7, 8) == [])
+        self.assertTrue(self.interval_tier1.get_intervals_between_timepoints(7, 8, True, False) == [])
+        self.assertTrue(self.interval_tier1.get_intervals_between_timepoints(7, 8, False, True) == [])
+        self.assertTrue(self.interval_tier1.get_intervals_between_timepoints(7, 8, True, True) == [])
 
-        self.assertTrue(self.interval1.get_intervals_between_timepoints(-2, 0, True, True) is None)
-        self.assertTrue(self.interval1.get_intervals_between_timepoints(-2, 0.25, True, True) == [tgt.Interval(0, 0.5, '')])
-        self.assertTrue(
-            self.interval1.get_intervals_between_timepoints(0.5, 3.5, True, True) == [tgt.Interval(0.5, 2.5, 'a'),
-                                                                   tgt.Interval(2.5, 3.5, 'b')])
-        self.assertTrue(self.interval1.get_intervals_between_timepoints(0.5, 3, True, True) == [tgt.Interval(0.5, 2.5,'a'),
-                                                                             tgt.Interval(2.5, 3.5, 'b')])
-        self.assertTrue(self.interval1.get_intervals_between_timepoints(2, 3, True, True) == [tgt.Interval(0.5, 2.5,'a'),
-                                                                           tgt.Interval(2.5, 3.5, 'b')])
-        self.assertTrue(
-            self.interval1.get_intervals_between_timepoints(0.5, 4, True, True) == [tgt.Interval(0.5, 2.5, 'a'),
-                                                                 tgt.Interval(2.5, 3.5, 'b'),
-                                                                 tgt.Interval(3.5, 5, ''),])
-        self.assertTrue(self.interval1.get_intervals_between_timepoints(8, 11, True, True) == [tgt.Interval(7.5, 9, 'd')])
-        self.assertTrue(self.interval1.get_intervals_between_timepoints(9, 11, True, True) is None)
-        self.assertTrue(self.interval1.get_intervals_between_timepoints(10, 11, True, True) is None)
-        self.assertTrue(
-            self.interval1.get_intervals_between_timepoints(1, 4, False, True) == [tgt.Interval(2.5, 3.5, 'b'),
-                                                                                   tgt.Interval(3.5, 5, '')])
-        self.assertTrue(
-            self.interval1.get_intervals_between_timepoints(1, 4, True, False) == [tgt.Interval(0.5, 2.5, 'a'),
-                                                                        tgt.Interval(2.5, 3.5, 'b')])
     def test_get_overlapping_intervals(self):
-        self.assertTrue(self.interval1.get_overlapping_intervals(self.interval2) == [tgt.Interval(0.5, 0.7, 'overlap'),
-                                                                                     tgt.Interval(0.7, 2.5, 'overlap'),
-                                                                                     tgt.Interval(5, 6, 'overlap'),
-                                                                                     tgt.Interval(7.5, 9, 'overlap')])
-        self.assertTrue(self.interval2.get_overlapping_intervals(self.interval1) == [tgt.Interval(0.5, 0.7, 'overlap'),
-                                                                                     tgt.Interval(0.7, 2.5, 'overlap'),
-                                                                                     tgt.Interval(5, 6, 'overlap'),
-                                                                                     tgt.Interval(7.5, 9, 'overlap')])
-        self.assertTrue(self.interval2.get_overlapping_intervals(self.interval1, r'^\s*$') == [tgt.Interval(6,7, 'overlap')])
+        self.assertTrue(self.interval_tier1.get_overlapping_intervals(self.interval_tier2) == [tgt.Interval(0.5, 0.7, 'overlap'),
+                                                                                               tgt.Interval(2.5, 3.5, 'overlap')])
+        self.assertTrue(self.interval_tier2.get_overlapping_intervals(self.interval_tier1) == [tgt.Interval(0.5, 0.7, 'overlap'),
+                                                                                               tgt.Interval(2.5, 3.5, 'overlap')])
+        self.assertTrue(self.interval_tier1.get_overlapping_intervals(self.interval_tier2, r'^\s*$') == [tgt.Interval(3.5, 5, 'overlap')])
+        self.assertTrue(self.interval_tier1.get_overlapping_intervals(self.interval_tier2, r'\d+') == [])
         
 
 
