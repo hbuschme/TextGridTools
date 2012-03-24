@@ -216,7 +216,8 @@ class IntervalTier(Tier):
         """Get interval at the specified time (or None)."""
         index = bisect.bisect_right(map(lambda x: x.right_bound,
                                         self._objects), time)
-        if (index != len(self._objects)):
+        
+        if (index != len(self._objects) and time >= self._objects[index].left_bound):
             return self._objects[index]
         else:
             return None
@@ -239,11 +240,8 @@ class IntervalTier(Tier):
         else:
             index_hi = bisect.bisect_right(map(lambda x: x.right_bound,
                                                self._objects), end)
-
-        if (index_lo != len(self._objects)) and index_lo != index_hi:
-            return self._objects[index_lo:index_hi]
-        else:
-            return None
+        
+        return self._objects[index_lo:index_hi]
 
     def get_overlapping_intervals(self, other, regex=r'[^\s]+'):
         """Return a list of overlaps between intervals of self and
