@@ -136,6 +136,8 @@ class TestIntervalTier(unittest.TestCase):
                                                                                                tgt.Interval(2.5, 3.5, 'overlap')])
         self.assertTrue(self.interval_tier2.get_overlapping_intervals(self.interval_tier1) == [tgt.Interval(0.5, 0.7, 'overlap'),
                                                                                                tgt.Interval(2.5, 3.5, 'overlap')])
+        self.assertTrue(self.interval_tier2.get_overlapping_intervals(self.interval_tier1, overlap_label='xxx') == [tgt.Interval(0.5, 0.7, 'xxx'),
+                                                                                                                    tgt.Interval(2.5, 3.5, 'xxx')])
         self.assertTrue(self.interval_tier1.get_overlapping_intervals(self.interval_tier2, r'^\s*$') == [tgt.Interval(3.5, 5, 'overlap')])
         self.assertTrue(self.interval_tier1.get_overlapping_intervals(self.interval_tier2, r'\d+') == [])
         

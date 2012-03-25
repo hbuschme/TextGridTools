@@ -243,7 +243,7 @@ class IntervalTier(Tier):
         
         return self._objects[index_lo:index_hi]
 
-    def get_overlapping_intervals(self, other, regex=r'[^\s]+'):
+    def get_overlapping_intervals(self, other, regex=r'[^\s]+', overlap_label='overlap'):
         """Return a list of overlaps between intervals of self and
         other matching the regular expression. All nonempty intervals
         are included in the search by default."""
@@ -259,7 +259,7 @@ class IntervalTier(Tier):
             hi = min(intervals1[i].right_bound, intervals2[j].right_bound)
             if (lo < hi and re.search(regex, intervals1[i].text)
                 and re.search(regex, intervals2[j].text)):
-                overlaps.append(Interval(lo, hi, 'overlap'))
+                overlaps.append(Interval(lo, hi, overlap_label))
             if intervals1[i].right_bound < intervals2[j].right_bound:
                 i += 1
             else:
