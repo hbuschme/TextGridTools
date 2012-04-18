@@ -479,7 +479,7 @@ def read_long_textgrid(filename, stg):
 
     def read_point_tier(stg_extract):
         '''Reads and returns a PointTier (called TextTier) from a long TextGrid.'''    
-        name = get_attr_val(stg_extract[1])[1:-1] # name w/o quotes
+        name = get_attr_val(stg_extract[2])[1:-1] # name w/o quotes
         start_time = get_attr_val(stg_extract[3])
         end_time = get_attr_val(stg_extract[4])
         pt = PointTier(start_time, end_time, name)
