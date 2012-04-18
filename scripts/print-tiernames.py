@@ -31,13 +31,14 @@ EXTENSION = 'TextGrid'
 
 def print_tiernames(filenames):
 	for filename in filenames:
-		print(filename)
 		try:
 			tg = tgt.read_textgrid(filename)
+			print(filename)
 			for tiername in tg.get_tier_names():
 				print('\t' + tiername)
-		except:
-			raise Exception(filename + ' caused a problem.')
+		except Exception, err:
+			print(filename + ' caused a problem.')
+			sys.stderr.write('ERROR: %s\n' % str(err))
 
 
 def main(argv=None):
@@ -49,7 +50,7 @@ def main(argv=None):
 	for arg in argv[1:]:
 		if os.path.exists(arg):
 			if os.path.isdir(arg):
-				list_of_tg_files += filter(lambda x: x.endswith(EXTENSION), os.listdir(arg))
+				list_of_tg_files += [arg + '/' + filename for filename in filter(lambda x: x.endswith(EXTENSION), os.listdir(arg))]
 			else:
 				list_of_tg_files.append(arg)
 		else:
