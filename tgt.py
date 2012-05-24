@@ -57,7 +57,7 @@ class TextGrid(object):
         
     def has_tier(self, name):
         """Check whether TextGrid has a tier of the specified name."""
-        return name in get_tier_names(self)
+        return name in self.get_tier_names()
     
     def get_tier_by_name(self, name):
         """Get tier of specified name name."""
