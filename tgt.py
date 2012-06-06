@@ -128,7 +128,6 @@ class Tier(object):
         self.start_time = Time(start_time)
         self.end_time = Time(end_time)
         self.name = name
-        self.type = 'UnknownTier'
         if objects is not None and objects != []:
             self._add_objects(objects, type=type(objects[0]))
     
@@ -142,17 +141,17 @@ class Tier(object):
         insert an empty interval if necessary."""
         if isinstance(object, type):
             if isinstance(object, Interval):
-                if self.end_time < object.left_bound:
+                if self.end_time < object.start_time:
                     # Add an empty interval (if necessary).
-                    empty_interval = Interval(self.end_time, object.left_bound, '')
+                    empty_interval = Interval(self.end_time, object.start_time, '')
                     self._objects.append(empty_interval)
-                self.end_time = object.right_bound
+                self.end_time = object.end_time
             elif isinstance(object, Point):
                 self.end_time = object.time
             self._objects.append(object)
         else:
             raise Exception('Could not add object ' + repr(object) + ' to this '
-                + self.type + '.')
+                + self.__class__.__name__ + '.')
     
     def __len__(self):
         """Return number of intervals/points in this tier."""
@@ -168,7 +167,7 @@ class Tier(object):
     def __str__(self):
         """Return string representation of this tier (in short format)."""
         w = lambda x: '"' + unicode(x) + '"'
-        tier_header = [w(self.type), w(self.name),
+        tier_header = [w(self.__class__.__name__), w(self.name),
                     self.start_time, self.end_time, len(self)]
         return '\n'.join(map(unicode, tier_header + self._objects))
     
@@ -178,7 +177,6 @@ class IntervalTier(Tier):
     
     def __init__(self, start_time=0, end_time=0, name='', objects=None):
         super(IntervalTier, self).__init__(Time(start_time), Time(end_time), name, objects)
-        self.type = 'IntervalTier'
     
     def add_intervals(self, intervals):
         """Add a list of intervals to this tier."""
@@ -196,37 +194,37 @@ class IntervalTier(Tier):
     intervals = property(fget=get_intervals,
                 doc='The list of intervals of this tier.')
 
-    def get_intervals_with_name(self, text, n=1):
+    def get_intervals_with_text(self, text, n=1):
         """Get the n first intervals with the specified text."""
         return [x for x in self.intervals if x.text == text][:n]
         
     
-    def get_interval_by_left_bound(self, left_bound):
+    def get_interval_by_start_time(self, start_time):
         """Get interval with the specified left bound (or None)."""
-        index = bisect.bisect_left(map(lambda x: x.left_bound,
-                    self._objects), left_bound)
+        index = bisect.bisect_left(map(lambda x: x.start_time,
+                    self._objects), start_time)
         if (index != len(self._objects) and 
-                    self._objects[index].left_bound == left_bound):
+                    self._objects[index].start_time == start_time):
             return self._objects[index]
         else:
             return None
     
-    def get_interval_by_right_bound(self, right_bound):
+    def get_interval_by_end_time(self, end_time):
         """Get interval with the specified right bound (or None)."""
-        index = bisect.bisect_left(map(lambda x: x.right_bound,
-                    self._objects), right_bound)
+        index = bisect.bisect_left(map(lambda x: x.end_time,
+                    self._objects), end_time)
         if (index != len(self._objects) 
-                    and self._objects[index].right_bound == right_bound):
+                    and self._objects[index].end_time == end_time):
             return self._objects[index]
         else:
             return None
 
     def get_interval_at_time(self, time):
         """Get interval at the specified time (or None)."""
-        index = bisect.bisect_right(map(lambda x: x.right_bound,
+        index = bisect.bisect_right(map(lambda x: x.end_time,
                                         self._objects), time)
         
-        if (index != len(self._objects) and time >= self._objects[index].left_bound):
+        if (index != len(self._objects) and time >= self._objects[index].start_time):
             return self._objects[index]
         else:
             return None
@@ -237,17 +235,17 @@ class IntervalTier(Tier):
         with start or end are excluded."""
 
         if left_overlap:
-            index_lo = bisect.bisect_right(map(lambda x: x.right_bound,
+            index_lo = bisect.bisect_right(map(lambda x: x.end_time,
                                                self._objects), start)
         else:
-            index_lo = bisect.bisect_left(map(lambda x: x.left_bound,
+            index_lo = bisect.bisect_left(map(lambda x: x.start_time,
                                               self._objects), start)
 
         if right_overlap:
-            index_hi = bisect.bisect_left(map(lambda x: x.left_bound,
+            index_hi = bisect.bisect_left(map(lambda x: x.start_time,
                                               self._objects), end)
         else:
-            index_hi = bisect.bisect_right(map(lambda x: x.right_bound,
+            index_hi = bisect.bisect_right(map(lambda x: x.end_time,
                                                self._objects), end)
         
         return self._objects[index_lo:index_hi]
@@ -264,12 +262,12 @@ class IntervalTier(Tier):
         overlaps = []
         i, j = 0, 0
         while i < len(self) and j < len(other):
-            lo = max(intervals1[i].left_bound, intervals2[j].left_bound)
-            hi = min(intervals1[i].right_bound, intervals2[j].right_bound)
+            lo = max(intervals1[i].start_time, intervals2[j].start_time)
+            hi = min(intervals1[i].end_time, intervals2[j].end_time)
             if (lo < hi and re.search(regex, intervals1[i].text)
                 and re.search(regex, intervals2[j].text)):
                 overlaps.append(Interval(lo, hi, overlap_label))
-            if intervals1[i].right_bound < intervals2[j].right_bound:
+            if intervals1[i].end_time < intervals2[j].end_time:
                 i += 1
             else:
                 j += 1
@@ -282,18 +280,18 @@ class IntervalTier(Tier):
         # Make end_time default to self.end_time
         end_time = self.end_time if end_time is None else Time(end_time)
         result = IntervalTier(self.start_time, end_time, self.name)
-        last_right_bound = self.start_time
+        last_end_time = self.start_time
         additional_intervals = 0 
         for obj in self._objects:
-            if obj.left_bound > last_right_bound:
+            if obj.start_time > last_end_time:
                 # insert empty interval
-                empty_interval = Interval(last_right_bound, obj.left_bound)
+                empty_interval = Interval(last_end_time, obj.start_time)
                 result.add_interval(empty_interval)
             result.add_interval(obj)
-            last_right_bound = obj.right_bound
-        if not times_equal_with_precision(end_time, last_right_bound) and end_time > last_right_bound:
+            last_end_time = obj.end_time
+        if not times_equal_with_precision(end_time, last_end_time) and end_time > last_end_time:
             # insert empty interval at the end (if necessary)
-            empty_interval = Interval(last_right_bound, end_time)
+            empty_interval = Interval(last_end_time, end_time)
             result.add_interval(empty_interval)
         return result
 
@@ -304,7 +302,6 @@ class PointTier(Tier):
     
     def __init__(self, start_time=0, end_time=0, name='', objects=None):
         super(PointTier, self).__init__(Time(start_time), Time(end_time), name, objects)
-        self.type = 'TextTier'
     
     def add_points(self, points):
         """Adds a list of points to this tier."""
@@ -332,26 +329,26 @@ class PointTier(Tier):
 class Interval(object):
     '''An interval of two points of time with an attached text label.'''
     
-    def __init__(self, left_bound, right_bound, text=''):
+    def __init__(self, start_time, end_time, text=''):
         super(Interval, self).__init__()
-        self.left_bound = Time(left_bound)
-        self.right_bound = Time(right_bound)
+        self.start_time = Time(start_time)
+        self.end_time = Time(end_time)
         self.text = text.strip()
     
     def duration(self):
         """Get duration of this interval."""
-        return self.right_bound - self.left_bound
+        return self.end_time - self.start_time
     
     def __eq__(self, other):
-        return (self.left_bound == other.left_bound
-                    and self.right_bound == other.right_bound
+        return (self.start_time == other.start_time
+                    and self.end_time == other.end_time
                     and self.text == other.text)
     
     def __repr__(self):
-        return u'Interval({0}, {1}, "{2}")'.format(self.left_bound, self.right_bound, self.text)
+        return u'Interval({0}, {1}, "{2}")'.format(self.start_time, self.end_time, self.text)
     
     def __str__(self):
-        return u'{0}\n{1}\n"{2}"'.format(self.left_bound, self.right_bound, self.text)
+        return u'{0}\n{1}\n"{2}"'.format(self.start_time, self.end_time, self.text)
     
 
 class Point(object):
