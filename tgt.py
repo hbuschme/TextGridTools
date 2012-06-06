@@ -27,9 +27,10 @@ import re
 
 
 __all__ = [
-    'TextGrid', 'IntervalTier', 'Interval', 'PointTier', 'Point',
+    'TextGrid', 'IntervalTier', 'Interval', 'PointTier', 'Point', 'Time',
     'read_textgrid', 'read_short_textgrid', 'read_long_textgrid',
-    'export_to_short_textgrid', 'export_to_long_textgrid', 'write_to_file'
+    'export_to_short_textgrid', 'export_to_long_textgrid', 'write_to_file',
+    'get_overlapping_intervals'
 ]
 
 
@@ -213,29 +214,6 @@ class IntervalTier(Tier):
         
         return self._objects[index_lo:index_hi]
 
-    def get_overlapping_intervals(self, other, regex=r'[^\s]+', overlap_label='overlap'):
-        """Return a list of overlaps between intervals of self and
-        other matching the regular expression. All nonempty intervals
-        are included in the search by default."""
-
-        if not isinstance(other, IntervalTier):
-            raise TypeError('Argument is not an IntervalTier')
-        intervals1 = self.intervals
-        intervals2 = other.intervals
-        overlaps = []
-        i, j = 0, 0
-        while i < len(self) and j < len(other):
-            lo = max(intervals1[i].start_time, intervals2[j].start_time)
-            hi = min(intervals1[i].end_time, intervals2[j].end_time)
-            if (lo < hi and re.search(regex, intervals1[i].text)
-                and re.search(regex, intervals2[j].text)):
-                overlaps.append(Interval(lo, hi, overlap_label))
-            if intervals1[i].end_time < intervals2[j].end_time:
-                i += 1
-            else:
-                j += 1
-        return overlaps
-
 class PointTier(Tier):
     '''A PointTier (also "TextTier").'''
     
@@ -263,6 +241,27 @@ class PointTier(Tier):
             return self._objects[index]
         else:
             return None
+
+    def get_points_between_timepoints(self, start, end, left_inclusive=False, right_inclusive=False):
+        """Get intervals between start and end. If left_inclusive or
+        right_inclusive is False (the default) points coinciding
+        with start or end are excluded."""
+
+        if left_inclusive:
+            index_lo = bisect.bisect_left(map(lambda x: x.time,
+                                              self._objects), start)
+        else:
+            index_lo = bisect.bisect_right(map(lambda x: x.time,
+                                               self._objects), start)
+
+        if right_inclusive:
+            index_hi = bisect.bisect_right(map(lambda x: x.time,
+                                               self._objects), end)
+        else:
+            index_hi = bisect.bisect_left(map(lambda x: x.time,
+                                              self._objects), end)
+            
+        return self._objects[index_lo:index_hi]
     
 
 class Interval(object):
@@ -331,7 +330,7 @@ class Time(float):
 
 
                  
-##  Functions for reading TextGrid files in the 'short' format.
+##  Functions for reading TextGrid files
 ##----------------------------------------------------------------------------
 
 def read_textgrid(filename, encoding='utf-8'):
@@ -454,6 +453,9 @@ def read_long_textgrid(filename, stg):
             raise Exception('Unknown tier type: {0}'.format(stg[index]))
     return tg
 
+##  Functions for writing TextGrid files
+##----------------------------------------------------------------------------
+
 def correct_end_times(textgrid):
     """Modify the end times of tiers to textgrid.end_time and (for
     interval tiers) add the final empty intervals if necessary."""
@@ -543,5 +545,29 @@ def write_to_file(textgrid, filename, format='short', encoding='utf-8'):
         else:
             Exception('Unknown output format: {0}'.format(format))
 
-
+##  High-level functions
+##----------------------------------------------------------------------------
         
+def get_overlapping_intervals(tier1, tier2, regex=r'[^\s]+', overlap_label='overlap'):
+    """Return a list of overlaps between intervals of tier1 and
+    tier2 matching the regular expression. All nonempty intervals
+    are included in the search by default."""
+
+    if not isinstance(tier2, IntervalTier):
+        raise TypeError('Argument is not an IntervalTier')
+    intervals1 = tier1.intervals
+    intervals2 = tier2.intervals
+    overlaps = []
+    i, j = 0, 0
+    while i < len(tier1) and j < len(tier2):
+        lo = max(intervals1[i].start_time, intervals2[j].start_time)
+        hi = min(intervals1[i].end_time, intervals2[j].end_time)
+        if (lo < hi and re.search(regex, intervals1[i].text)
+            and re.search(regex, intervals2[j].text)):
+            overlaps.append(Interval(lo, hi, overlap_label))
+        if intervals1[i].end_time < intervals2[j].end_time:
+            i += 1
+        else:
+            j += 1
+    return overlaps
+
