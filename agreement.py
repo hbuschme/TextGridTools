@@ -100,11 +100,8 @@ def two_raters_table(l):
         Exception('The lengths of sublists differ.')
     # List of unique labels from both lists.
     categories = list(set(itertools.chain(*l)))
-    # Dictionary translating labels into consecutive integers.
-    trans = dict([(categories[x], x) for x in range(len(categories))])
-    cont_table = np.zeros([len(categories), len(categories)])
-    for labels in l:
-        cont_table[trans[labels[0]], trans[labels[1]]] += 1
+    cont_table = np.array([l.count(x) for x in itertools.product(categories, categories)])
+    cont_table.shape = (len(categories), len(categories))
     return cont_table
 
 def n_raters_table(l):
@@ -120,3 +117,29 @@ def n_raters_table(l):
     cont_table = np.array([x.count(y) for x in l for y in categories])
     cont_table.shape = (sublists_lengths[0], len(categories))
     return cont_table
+
+def produce_aligned_labels_lists(tiers_list, regex=r'[^\s]+'):
+    '''Creates a list of lists of labels matching the specified
+    regular expression from time-aligned intervals of the input
+    interval tiers.'''
+    # TODO: needs testing.
+    if not tiers_list:
+        Exception('The input list is empty.')
+    elif any([not x.isinstance(IntervalTier) for x in tiers_list]):
+        TypeError('Not an IntervalTier')
+    elif len(set([len(x.intervals) for x in l])) > 1:
+        Exception('The numbers of intervals do not match')
+    labels_aligned = []
+    for intervals in itertools.izip(*[x.intervals for x in tiers_list]):
+        left_bounds = [x.left_bound for x in intervals]
+        right_bounds = [x.right_bound for x in intervals]
+        labels = [x.text for x in intervals]
+        if any([not re.search(regex, x) for x in labels]):
+            # Only go on if labels of all intervals match the regex.
+            continue
+        elif (left_bounds.count(left_bounds[0]) != len(left_bounds)
+              or right_bounds.count(right_bounds[0]) != len(right_bounds)):
+            Exception('Times of boundaries do not match')
+        else:
+            labels_aligned.append(intervals)
+    return labels_aligned
