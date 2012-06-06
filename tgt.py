@@ -235,27 +235,6 @@ class IntervalTier(Tier):
             else:
                 j += 1
         return overlaps
-                
-    # def add_empty_intervals(self, end_time=None):
-    #     """Return a copy of this tier with empty intervals inserted."""
-        
-    #     # Make end_time default to self.end_time
-    #     end_time = self.end_time if end_time is None else Time(end_time)
-    #     result = IntervalTier(self.start_time, end_time, self.name)
-    #     last_end_time = self.start_time
-    #     additional_intervals = 0 
-    #     for obj in self._objects:
-    #         if obj.start_time > last_end_time:
-    #             # insert empty interval
-    #             empty_interval = Interval(last_end_time, obj.start_time)
-    #             result.add_interval(empty_interval)
-    #         result.add_interval(obj)
-    #         last_end_time = obj.end_time
-    #     if not times_equal_with_precision(end_time, last_end_time) and end_time > last_end_time:
-    #         # insert empty interval at the end (if necessary)
-    #         empty_interval = Interval(last_end_time, end_time)
-    #         result.add_interval(empty_interval)
-    #     return result
 
 class PointTier(Tier):
     '''A PointTier (also "TextTier").'''
