@@ -67,16 +67,16 @@ class TextGrid(object):
         raise ValueError('Textgrid ' + self. filename +
                     ' does not have a tier called "' + name + '".')
         
-    def earliest_start_time(self):
+    def _earliest_start_time(self):
         '''Return the earliest start time among all tiers.'''
         return min(map(lambda t: t.start_time, self.tiers))
-    start_time = property(fget=earliest_start_time,
+    start_time = property(fget=_earliest_start_time,
                           doc='TextGrid start time.')
         
-    def latest_end_time(self):
+    def _latest_end_time(self):
         '''Return the latest end time among all tiers.'''
         return max(map(lambda t: t.end_time, self.tiers))
-    end_time = property(fget=latest_end_time,
+    end_time = property(fget=_latest_end_time,
                         doc='TextGrid end time.')
 
     def write_to_file(self, filename, encoding='utf-8'):
@@ -122,13 +122,15 @@ class TextGrid(object):
 class Tier(object):
     "A general tier."
     
-    def __init__(self, start_time=0, end_time=0, name=''):
+    def __init__(self, start_time=0, end_time=0, name='', objects=None):
         super(Tier, self).__init__()
         self._objects = []
         self.start_time = Time(start_time)
         self.end_time = Time(end_time)
         self.name = name
         self.type = 'UnknownTier'
+        if objects is not None and objects != []:
+            self._add_objects(objects, type=type(objects[0]))
     
     def _add_objects(self, objects, type=None):
         """Add a list of intervals or a list of points to this tier."""
@@ -155,7 +157,14 @@ class Tier(object):
     def __len__(self):
         """Return number of intervals/points in this tier."""
         return len(self._objects)
-    
+
+    def __repr__(self):
+        return '%s(start_time=%s, end_time=%s, name="%s", objects=%s)' % (self.__class__.__name__,
+                                                                          self.start_time,
+                                                                          self.end_time,
+                                                                          self.name,
+                                                                          self._objects)
+
     def __str__(self):
         """Return string representation of this tier (in short format)."""
         w = lambda x: '"' + unicode(x) + '"'
@@ -167,8 +176,8 @@ class Tier(object):
 class IntervalTier(Tier):
     '''An IntervalTier.'''
     
-    def __init__(self, start_time=0, end_time=0, name=''):
-        super(IntervalTier, self).__init__(Time(start_time), Time(end_time), name)
+    def __init__(self, start_time=0, end_time=0, name='', objects=None):
+        super(IntervalTier, self).__init__(Time(start_time), Time(end_time), name, objects)
         self.type = 'IntervalTier'
     
     def add_intervals(self, intervals):
@@ -288,11 +297,13 @@ class IntervalTier(Tier):
             result.add_interval(empty_interval)
         return result
 
+    
+
 class PointTier(Tier):
     '''A PointTier (also "TextTier").'''
     
-    def __init__(self, start_time=0, end_time=0, name=''):
-        super(PointTier, self).__init__(Time(start_time), Time(end_time), name)
+    def __init__(self, start_time=0, end_time=0, name='', objects=None):
+        super(PointTier, self).__init__(Time(start_time), Time(end_time), name, objects)
         self.type = 'TextTier'
     
     def add_points(self, points):
