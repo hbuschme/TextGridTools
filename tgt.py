@@ -21,12 +21,15 @@ from __future__ import division
 import bisect
 import codecs
 import copy
+import itertools
 import math
 import re
 
+
 __all__ = [
     'TextGrid', 'IntervalTier', 'Interval', 'PointTier', 'Point',
-    'read_textgrid', 'read_short_textgrid', 'read_long_textgrid', 'write_short_textgrid'
+    'read_textgrid', 'read_short_textgrid', 'read_long_textgrid',
+    'export_to_short_textgrid', 'export_to_long_textgrid', 'write_to_file'
 ]
 
 
@@ -79,46 +82,11 @@ class TextGrid(object):
     end_time = property(fget=_latest_end_time,
                         doc='TextGrid end time.')
 
-    def write_to_file(self, filename, encoding='utf-8'):
-        '''Writes textgrid to a Praat short TextGrid file.'''
-        f = codecs.open(filename, 'w', encoding)
-        f.write(unicode(self))
-        f.close()
-
     def __len__(self):
         '''Return the number of tiers.'''
         return len(self.tiers)
 
-    def _update_end_times(self):
-        """Modify the end times of Intervals to self.end_time and (for interval tiers)
-        add the final empty intervals if necessary."""
-        for tier in self.tiers:
-            if isinstance(tier, IntervalTier) and tier.end_time < self.end_time:
-                # For interval tiers insert the final empty interval
-                # if necessary.
-                empty_interval = Interval(tier.end_time, self.end_time, '')
-                tier._add_object(empty_interval, Interval)
-            tier.end_time = self.end_time
     
-    def __str__(self):
-        '''Return string representation of this TextGrid (in short format).'''
-        header =  [
-            'File type = "ooTextFile"',
-            'Object class = "TextGrid"',
-            '',
-            self.start_time,
-            self.end_time,
-            '<exists>',
-            len(self.tiers)
-        ]
-        # Make a copy of the textgrid, update tiers' end times and
-        # (for interval tiers) insert the final empty interval if
-        # necessary.
-        textgrid_copy = copy.deepcopy(self)
-        textgrid_copy._update_end_times()
-        return '\n'.join(map(unicode, header + textgrid_copy.tiers))
-    
-
 class Tier(object):
     "A general tier."
     
@@ -164,12 +132,7 @@ class Tier(object):
                                                                           self.name,
                                                                           self._objects)
 
-    def __str__(self):
-        """Return string representation of this tier (in short format)."""
-        w = lambda x: '"' + unicode(x) + '"'
-        tier_header = [w(self.__class__.__name__), w(self.name),
-                    self.start_time, self.end_time, len(self)]
-        return '\n'.join(map(unicode, tier_header + self._objects))
+
     
 
 class IntervalTier(Tier):
@@ -273,29 +236,26 @@ class IntervalTier(Tier):
                 j += 1
         return overlaps
                 
-    
-    def add_empty_intervals(self, end_time=None):
-        """Return a copy of this tier with empty intervals inserted."""
+    # def add_empty_intervals(self, end_time=None):
+    #     """Return a copy of this tier with empty intervals inserted."""
         
-        # Make end_time default to self.end_time
-        end_time = self.end_time if end_time is None else Time(end_time)
-        result = IntervalTier(self.start_time, end_time, self.name)
-        last_end_time = self.start_time
-        additional_intervals = 0 
-        for obj in self._objects:
-            if obj.start_time > last_end_time:
-                # insert empty interval
-                empty_interval = Interval(last_end_time, obj.start_time)
-                result.add_interval(empty_interval)
-            result.add_interval(obj)
-            last_end_time = obj.end_time
-        if not times_equal_with_precision(end_time, last_end_time) and end_time > last_end_time:
-            # insert empty interval at the end (if necessary)
-            empty_interval = Interval(last_end_time, end_time)
-            result.add_interval(empty_interval)
-        return result
-
-    
+    #     # Make end_time default to self.end_time
+    #     end_time = self.end_time if end_time is None else Time(end_time)
+    #     result = IntervalTier(self.start_time, end_time, self.name)
+    #     last_end_time = self.start_time
+    #     additional_intervals = 0 
+    #     for obj in self._objects:
+    #         if obj.start_time > last_end_time:
+    #             # insert empty interval
+    #             empty_interval = Interval(last_end_time, obj.start_time)
+    #             result.add_interval(empty_interval)
+    #         result.add_interval(obj)
+    #         last_end_time = obj.end_time
+    #     if not times_equal_with_precision(end_time, last_end_time) and end_time > last_end_time:
+    #         # insert empty interval at the end (if necessary)
+    #         empty_interval = Interval(last_end_time, end_time)
+    #         result.add_interval(empty_interval)
+    #     return result
 
 class PointTier(Tier):
     '''A PointTier (also "TextTier").'''
@@ -347,8 +307,7 @@ class Interval(object):
     def __repr__(self):
         return u'Interval({0}, {1}, "{2}")'.format(self.start_time, self.end_time, self.text)
     
-    def __str__(self):
-        return u'{0}\n{1}\n"{2}"'.format(self.start_time, self.end_time, self.text)
+
     
 
 class Point(object):
@@ -365,8 +324,7 @@ class Point(object):
     def __repr__(self):
         return u'Point({0}, "{1}")'.format(self.time, self.text)
     
-    def __str__(self):
-        return u'{0}\n"{1}"'.format(self.time, self.text)
+
 
 class Time(float):
     '''A representation of point in time with a predefined precision.'''
@@ -517,9 +475,94 @@ def read_long_textgrid(filename, stg):
             raise Exception('Unknown tier type: {0}'.format(stg[index]))
     return tg
 
+def correct_end_times(textgrid):
+    """Modify the end times of tiers to textgrid.end_time and (for
+    interval tiers) add the final empty intervals if necessary."""
 
-def write_short_textgrid(textgrid, filename, encoding):
+    textgrid_copy = copy.deepcopy(textgrid)
+    for tier in textgrid_copy.tiers:
+        if isinstance(tier, IntervalTier) and tier.end_time < textgrid_copy.end_time:
+            # For interval tiers insert the final empty interval
+            # if necessary.
+            empty_interval = Interval(tier.end_time, textgrid_copy.end_time, '')
+            tier._add_object(empty_interval, Interval)
+        tier.end_time = textgrid_copy.end_time
+    return textgrid_copy
+
+def export_to_short_textgrid(textgrid, encoding='utf-8'):
     '''Writes a TextGrid object to a Praat short TextGrid file.'''
-    textgrid.write_to_file(filename, encoding)
+    
+    textgrid_str =  ['File type = "ooTextFile"',
+                     'Object class = "TextGrid"',
+                     '',
+                     textgrid.start_time,
+                     textgrid.end_time,
+                     '<exists>',
+                     len(textgrid.tiers)]
+
+    
+    textgrid_corrected = correct_end_times(textgrid)
+    
+    quote = lambda x: '"' + unicode(x) + '"'
+    for tier in textgrid_corrected.tiers:
+        textgrid_str += ['"{0}"'.format(unicode(tier.__class__.__name__)),
+                         '"{0}"'.format(unicode(tier.name)),
+                         tier.start_time, tier.end_time, len(tier)]
+        if isinstance(tier, IntervalTier):
+            textgrid_str += [u'{0}\n{1}\n"{2}"'.format(obj.start_time, obj.end_time, obj.text)
+                             for obj in tier._objects]
+        elif isinstance(tier, PointTier):
+            textgrid_str += [u'{0}\n"{1}"'.format(obj.time, obj.text)
+                             for obj in tier._objects]
+        else:
+            Exception('Unknown tier type: {0}'.format(tier.name))
+    return '\n'.join(map(unicode, textgrid_str))
+
+def export_to_long_textgrid(textgrid, encoding='utf-8'):
+    '''Writes a TextGrid object to a Praat long TextGrid file.'''
+    
+    textgrid_str =  ['File type = "ooTextFile"',
+                     'Object class = "TextGrid"',
+                     '',
+                     'xmin = ' + unicode(textgrid.start_time),
+                     'xmax = ' + unicode(textgrid.end_time),
+                     'tiers? <exists>',
+                     'size = ' + unicode(len(textgrid.tiers)),
+                     'item []:']
+
+    
+    textgrid_corrected = correct_end_times(textgrid)
+    
+    for i, tier in enumerate(textgrid_corrected.tiers):
+        textgrid_str += ['\titem [{0}]:'.format(i + 1),
+                         '\t\tclass = "{0}"'.format(tier.__class__.__name__),
+                         '\t\tname = "{0}"'.format(tier.name),
+                         '\t\txmin = ' + unicode(tier.start_time),
+                         '\t\txmax = ' + unicode(tier.end_time),
+                         '\t\tintervals: size = ' + unicode(len(tier))]
+        if isinstance(tier, IntervalTier):
+            for j, obj in enumerate(tier._objects):
+                textgrid_str += ['\t\tintervals [{0}]:'.format(j + 1),
+                                 '\t\t\txmin = ' + unicode(obj.start_time),
+                                 '\t\t\txmax = ' + unicode(obj.end_time),
+                                 '\t\t\ttext = "' + unicode(obj.text) + '"']
+        elif isinstance(tier, PointTier):
+            for j, obj in enumerate(tier._objects):
+                textgrid_str += ['\t\tpoints [{0}]:'.format(j + 1),
+                                 '\t\t\tnumber = ' + obj.time,
+                                 '\t\t\tmark = "' + obj.text + '"']
+        else:
+            Exception('Unknown tier type: {0}'.format(tier.name))
+    return '\n'.join(map(unicode, textgrid_str))
+   
+EXPORT_FORMATS = {'short' : export_to_short_textgrid, 'long' : export_to_long_textgrid}
+def write_to_file(textgrid, filename, format='short', encoding='utf-8'):
+
+    with codecs.open(filename, 'w', encoding) as f:
+        if format in EXPORT_FORMATS:
+            f.write(EXPORT_FORMATS[format](textgrid))
+        else:
+            Exception('Unknown output format: {0}'.format(format))
 
 
+        
