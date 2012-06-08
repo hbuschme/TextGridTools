@@ -20,7 +20,9 @@
 from __future__ import division
 import bisect
 import codecs
+import collections
 import copy
+import datetime
 import itertools
 import math
 import operator
@@ -554,12 +556,76 @@ def export_to_long_textgrid(textgrid, encoding='utf-8'):
     return '\n'.join(map(unicode, result))
 
 
+def export_to_elan(textgrid, encoding='utf-8', include_empty_annotations=False,
+                   point_tier_annotation_duration=40):
+    """Convert a TextGrid object into a string of ELAN eaf format."""
+
+    time_slots = collections.OrderedDict() # 
+    def get_time_slot_id(time, ts_dict=time_slots):
+        """Returns (and possibly creates) the time slot id of time."""
+        time_in_ms = int(time * 1000)
+        if time_in_ms not in ts_dict:
+            ts_id = 'ts' + str(len(ts_dict) + 1)
+            ts_dict[time_in_ms] = ts_id
+        return ts_dict[time_in_ms] 
+
+    # Create ELAN header
+    head = [
+        u'<?xml version="1.0" encoding="{0}"?>'.format(encoding.upper()),
+        u'<ANNOTATION_DOCUMENT AUTHOR="TextGridTools" DATE="{0}" FORMAT="2.7" VERSION="2.7" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://www.mpi.nl/tools/elan/EAFv2.7.xsd">'.format(datetime.datetime.now().strftime('%Y-%m-%dT%H:%M:%S+00:00')),
+        u'<HEADER MEDIA_FILE="" TIME_UNITS="milliseconds">',
+        u'\t<PROPERTY NAME="lastUsedAnnotationId">0</PROPERTY>',
+        u'</HEADER>']
+    # Create annotations
+    annotation_id_count = 1
+    annotations = []
+    for tier in textgrid.tiers:
+        annotations.append(u'<TIER DEFAULT_LOCALE="en" LINGUISTIC_TYPE_REF="default-lt" TIER_ID="{0}">'.format(tier.name))
+        if isinstance(tier, IntervalTier):
+            for interval in tier.intervals:
+                if not include_empty_annotations and interval.text == '':
+                    continue
+                annotations += [
+                    u'<ANNOTATION>',
+                    u'\t<ALIGNABLE_ANNOTATION ANNOTATION_ID="{0}" TIME_SLOT_REF1="{1}" TIME_SLOT_REF2="{2}">'.format('a' + str(annotation_id_count), get_time_id(interval.start_time), get_time_id(interval.end_time)),
+                    u'\t\t<ANNOTATION_VALUE>{0}</ANNOTATION_VALUE>'.format(interval.text),
+                    u'\t</ALIGNABLE_ANNOTATION>',
+                    u'</ANNOTATION>']
+                annotation_id_count += 1
+        elif isinstance(tier, PointTier):
+            for point in tier.points:
+                annotations += [
+                    u'<ANNOTATION>',
+                    u'\t<ALIGNABLE_ANNOTATION ANNOTATION_ID="{0}" TIME_SLOT_REF1="{1}" TIME_SLOT_REF2="{2}">'.format('a' + str(annotation_id_count), get_time_id(point.time), get_time_id(point.time + point_tier_annotation_duration)),
+                    u'\t\t<ANNOTATION_VALUE>{0}</ANNOTATION_VALUE>'.format(point.text),
+                    u'\t</ALIGNABLE_ANNOTATION>',
+                    u'</ANNOTATION>']
+                annotation_id_count += 1
+        else:
+            Exception('Unknown tier type: {0}'.format(tier.name))
+        annotations.append(u'</TIER>')
+    # Create time stamp information
+    time_info = [u'<TIME_ORDER>']
+    for time_value, time_slot_id in time_slots.items():
+        time_info.append(u'\t<TIME_SLOT TIME_SLOT_ID="{0}" \
+            TIME_VALUE="{1}"/>'.format(time_slot_id, str(time_value)))
+    time_info.append(u'</TIME_ORDER>')
+    # Create ELAN footer
+    foot = [u'<LINGUISTIC_TYPE GRAPHIC_REFERENCES="false" LINGUISTIC_TYPE_ID="default-lt" TIME_ALIGNABLE="true"/>',
+            u'<LOCALE COUNTRY_CODE="US" LANGUAGE_CODE="en"/>',
+            u'</ANNOTATION_DOCUMENT>']
+    eaf = head + time_info + annotations + foot
+    return '\n'.join(map(unicode, eaf))
+
+
 # Listing of currently supported export formats.
 _EXPORT_FORMATS = {
     # Export to Praat TextGrid in short format
     'short' : export_to_short_textgrid,
     # Export to Praat TextGrid in long (i.e., standard) format
     'long' : export_to_long_textgrid,
+    # Export to ELAN .seaf format
+    'eaf' : export_to_elan,
 }
 
 
