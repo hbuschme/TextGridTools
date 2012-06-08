@@ -629,11 +629,11 @@ _EXPORT_FORMATS = {
 }
 
 
-def write_to_file(textgrid, filename, format='short', encoding='utf-8'):
+def write_to_file(textgrid, filename, format='short', encoding='utf-8', **kwargs):
     """Write a TextGrid object to a file in the specified format."""
     with codecs.open(filename, 'w', encoding) as f:
         if format in _EXPORT_FORMATS:
-            f.write(_EXPORT_FORMATS[format](textgrid, encoding))
+            f.write(_EXPORT_FORMATS[format](textgrid, encoding, **kwargs))
         else:
             Exception('Unknown output format: {0}'.format(format))
 
