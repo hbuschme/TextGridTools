@@ -587,7 +587,7 @@ def export_to_elan(textgrid, encoding='utf-8', include_empty_annotations=False,
                     continue
                 annotations += [
                     u'<ANNOTATION>',
-                    u'\t<ALIGNABLE_ANNOTATION ANNOTATION_ID="{0}" TIME_SLOT_REF1="{1}" TIME_SLOT_REF2="{2}">'.format('a' + str(annotation_id_count), get_time_id(interval.start_time), get_time_id(interval.end_time)),
+                    u'\t<ALIGNABLE_ANNOTATION ANNOTATION_ID="{0}" TIME_SLOT_REF1="{1}" TIME_SLOT_REF2="{2}">'.format('a' + str(annotation_id_count), get_time_slot_id(interval.start_time), get_time_slot_id(interval.end_time)),
                     u'\t\t<ANNOTATION_VALUE>{0}</ANNOTATION_VALUE>'.format(interval.text),
                     u'\t</ALIGNABLE_ANNOTATION>',
                     u'</ANNOTATION>']
@@ -596,7 +596,7 @@ def export_to_elan(textgrid, encoding='utf-8', include_empty_annotations=False,
             for point in tier.points:
                 annotations += [
                     u'<ANNOTATION>',
-                    u'\t<ALIGNABLE_ANNOTATION ANNOTATION_ID="{0}" TIME_SLOT_REF1="{1}" TIME_SLOT_REF2="{2}">'.format('a' + str(annotation_id_count), get_time_id(point.time), get_time_id(point.time + point_tier_annotation_duration)),
+                    u'\t<ALIGNABLE_ANNOTATION ANNOTATION_ID="{0}" TIME_SLOT_REF1="{1}" TIME_SLOT_REF2="{2}">'.format('a' + str(annotation_id_count), get_time_slot_id(point.time), get_time_slot_id(point.time + point_tier_annotation_duration)),
                     u'\t\t<ANNOTATION_VALUE>{0}</ANNOTATION_VALUE>'.format(point.text),
                     u'\t</ALIGNABLE_ANNOTATION>',
                     u'</ANNOTATION>']
