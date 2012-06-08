@@ -557,7 +557,7 @@ def export_to_long_textgrid(textgrid, encoding='utf-8'):
 
 
 def export_to_elan(textgrid, encoding='utf-8', include_empty_annotations=False,
-                   point_tier_annotation_duration=40):
+                   include_point_tiers=True, point_tier_annotation_duration=0.04):
     """Convert a TextGrid object into a string of ELAN eaf format."""
 
     time_slots = collections.OrderedDict() # 
@@ -593,22 +593,22 @@ def export_to_elan(textgrid, encoding='utf-8', include_empty_annotations=False,
                     u'</ANNOTATION>']
                 annotation_id_count += 1
         elif isinstance(tier, PointTier):
-            for point in tier.points:
-                annotations += [
-                    u'<ANNOTATION>',
-                    u'\t<ALIGNABLE_ANNOTATION ANNOTATION_ID="{0}" TIME_SLOT_REF1="{1}" TIME_SLOT_REF2="{2}">'.format('a' + str(annotation_id_count), get_time_slot_id(point.time), get_time_slot_id(point.time + point_tier_annotation_duration)),
-                    u'\t\t<ANNOTATION_VALUE>{0}</ANNOTATION_VALUE>'.format(point.text),
-                    u'\t</ALIGNABLE_ANNOTATION>',
-                    u'</ANNOTATION>']
-                annotation_id_count += 1
+            if include_point_tiers:
+                for point in tier.points:
+                    annotations += [
+                        u'<ANNOTATION>',
+                        u'\t<ALIGNABLE_ANNOTATION ANNOTATION_ID="{0}" TIME_SLOT_REF1="{1}" TIME_SLOT_REF2="{2}">'.format('a' + str(annotation_id_count), get_time_slot_id(point.time), get_time_slot_id(point.time + point_tier_annotation_duration)),
+                        u'\t\t<ANNOTATION_VALUE>{0}</ANNOTATION_VALUE>'.format(point.text),
+                        u'\t</ALIGNABLE_ANNOTATION>',
+                        u'</ANNOTATION>']
+                    annotation_id_count += 1
         else:
             Exception('Unknown tier type: {0}'.format(tier.name))
         annotations.append(u'</TIER>')
     # Create time stamp information
     time_info = [u'<TIME_ORDER>']
     for time_value, time_slot_id in time_slots.items():
-        time_info.append(u'\t<TIME_SLOT TIME_SLOT_ID="{0}" \
-            TIME_VALUE="{1}"/>'.format(time_slot_id, str(time_value)))
+        time_info.append(u'\t<TIME_SLOT TIME_SLOT_ID="{0}" TIME_VALUE="{1}"/>'.format(time_slot_id, str(time_value)))
     time_info.append(u'</TIME_ORDER>')
     # Create ELAN footer
     foot = [u'<LINGUISTIC_TYPE GRAPHIC_REFERENCES="false" LINGUISTIC_TYPE_ID="default-lt" TIME_ALIGNABLE="true"/>',
