@@ -495,7 +495,7 @@ def correct_end_times(textgrid):
     return textgrid_copy
 
 
-def export_to_short_textgrid(textgrid, encoding='utf-8'):
+def export_to_short_textgrid(textgrid):
     '''Convert a TextGrid object into a string of Praat short TextGrid format.'''
     result =  ['File type = "ooTextFile"',
                'Object class = "TextGrid"',
@@ -521,7 +521,7 @@ def export_to_short_textgrid(textgrid, encoding='utf-8'):
     return '\n'.join(map(unicode, textgrid_str))
 
 
-def export_to_long_textgrid(textgrid, encoding='utf-8'):
+def export_to_long_textgrid(textgrid):
     """Convert a TextGrid object into a string of Praat long TextGrid format."""
     result =  ['File type = "ooTextFile"',
                'Object class = "TextGrid"',
