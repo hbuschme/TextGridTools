@@ -23,7 +23,6 @@ import codecs
 import collections
 import copy
 import datetime
-import itertools
 import math
 import operator
 import re
@@ -165,7 +164,7 @@ class IntervalTier(Tier):
     intervals = property(fget=_get_intervals,
                 doc='The list of intervals of this tier.')
 
-    def get_interval(self, time):
+    def get_interval_at_time(self, time):
         """Get interval at the specified time (or None)."""
         index = bisect.bisect_right(map(operator.attrgetter('end_time'),
                                         self._objects), time)
@@ -250,7 +249,7 @@ class PointTier(Tier):
     points = property(fget=_get_points,
                 doc='The list of points of this tier.')
     
-    def get_point(self, time):
+    def get_point_at_time(self, time):
         """Get point at specified point of time."""
         index = bisect_left(map(lambda x: x.time, self._objects), time)
         if index != len(self._objects) and self._objects[index].time == time:
