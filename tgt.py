@@ -631,7 +631,6 @@ def export_to_table(textgrid, separator=','):
                                               unicode(obj.time), unicode(obj.time), obj.text]))
         else:
             Exception('Unknown tier type: {0}'.format(tier.name))
-    print(result[:2])
     return '\n'.join(map(unicode, result))
 
 # Listing of currently supported export formats.
