@@ -519,7 +519,7 @@ def export_to_short_textgrid(textgrid, encoding='utf-8'):
                        for obj in tier._objects]
         else:
             Exception('Unknown tier type: {0}'.format(tier.name))
-    return '\n'.join(map(unicode, textgrid_str))
+    return '\n'.join(map(unicode, result))
 
 
 def export_to_long_textgrid(textgrid, encoding='utf-8'):
