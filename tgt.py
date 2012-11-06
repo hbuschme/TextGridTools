@@ -23,11 +23,9 @@ import codecs
 import collections
 import copy
 import datetime
-import itertools
 import math
 import operator
 import re
-
 
 __all__ = [
     # Classes
@@ -165,7 +163,7 @@ class IntervalTier(Tier):
     intervals = property(fget=_get_intervals,
                 doc='The list of intervals of this tier.')
 
-    def get_interval(self, time):
+    def get_interval_at_time(self, time):
         """Get interval at the specified time (or None)."""
         index = bisect.bisect_right(map(operator.attrgetter('end_time'),
                                         self._objects), time)
@@ -250,7 +248,7 @@ class PointTier(Tier):
     points = property(fget=_get_points,
                 doc='The list of points of this tier.')
     
-    def get_point(self, time):
+    def get_point_at_time(self, time):
         """Get point at specified point of time."""
         index = bisect_left(map(lambda x: x.time, self._objects), time)
         if index != len(self._objects) and self._objects[index].time == time:
@@ -496,7 +494,7 @@ def correct_end_times(textgrid):
     return textgrid_copy
 
 
-def export_to_short_textgrid(textgrid, encoding='utf-8'):
+def export_to_short_textgrid(textgrid):
     '''Convert a TextGrid object into a string of Praat short TextGrid format.'''
     result =  ['File type = "ooTextFile"',
                'Object class = "TextGrid"',
@@ -508,9 +506,9 @@ def export_to_short_textgrid(textgrid, encoding='utf-8'):
     textgrid_corrected = correct_end_times(textgrid)
     quote = lambda x: '"' + unicode(x) + '"'
     for tier in textgrid_corrected.tiers:
-        result += ['"{0}"'.format(unicode(tier.__class__.__name__)),
-                         '"{0}"'.format(unicode(tier.name)),
-                         tier.start_time, tier.end_time, len(tier)]
+        result += ['"' + tier.__class__.__name__ + '"',
+                   '"' + tier.name + '"',
+                   tier.start_time, tier.end_time, len(tier)]
         if isinstance(tier, IntervalTier):
             result += [u'{0}\n{1}\n"{2}"'.format(obj.start_time, obj.end_time, obj.text)
                        for obj in tier._objects]
@@ -522,7 +520,7 @@ def export_to_short_textgrid(textgrid, encoding='utf-8'):
     return '\n'.join(map(unicode, result))
 
 
-def export_to_long_textgrid(textgrid, encoding='utf-8'):
+def export_to_long_textgrid(textgrid):
     """Convert a TextGrid object into a string of Praat long TextGrid format."""
     result =  ['File type = "ooTextFile"',
                'Object class = "TextGrid"',
@@ -545,7 +543,7 @@ def export_to_long_textgrid(textgrid, encoding='utf-8'):
                 result += ['\t\tintervals [{0}]:'.format(j + 1),
                            '\t\t\txmin = ' + unicode(obj.start_time),
                            '\t\t\txmax = ' + unicode(obj.end_time),
-                           '\t\t\ttext = "' + unicode(obj.text) + '"']
+                           '\t\t\ttext = "' + obj.text + '"']
         elif isinstance(tier, PointTier):
             for j, obj in enumerate(tier._objects):
                 result += ['\t\tpoints [{0}]:'.format(j + 1),
@@ -554,7 +552,6 @@ def export_to_long_textgrid(textgrid, encoding='utf-8'):
         else:
             Exception('Unknown tier type: {0}'.format(tier.name))
     return '\n'.join(map(unicode, result))
-
 
 def export_to_elan(textgrid, encoding='utf-8', include_empty_annotations=False,
                    include_point_tiers=True, point_tier_annotation_duration=0.04):
@@ -617,6 +614,24 @@ def export_to_elan(textgrid, encoding='utf-8', include_empty_annotations=False,
     eaf = head + time_info + annotations + foot
     return '\n'.join(map(unicode, eaf))
 
+def export_to_table(textgrid, separator=','):
+    """Convert a TextGrid object into a table with fields delimited
+    with the specified separator (comma by default)."""
+    result = [separator.join(['tier_name', 'tier_type', 'start_time', 'end_time', 'text'])]
+
+    for tier in textgrid.tiers:
+        if isinstance(tier, IntervalTier):
+            for obj in tier._objects:
+                if obj.text:
+                    result.append(separator.join([unicode(tier.name), unicode(tier.__class__.__name__),
+                                                  unicode(obj.start_time), unicode(obj.end_time), obj.text]))
+        elif isinstance(tier, PointTier):
+            for obj in tier._objects:
+                result.append(separator.join([unicode(tier.name), unicode(tier.__class__.__name__),
+                                              unicode(obj.time), unicode(obj.time), obj.text]))
+        else:
+            Exception('Unknown tier type: {0}'.format(tier.name))
+    return '\n'.join(map(unicode, result))
 
 # Listing of currently supported export formats.
 _EXPORT_FORMATS = {
@@ -624,16 +639,19 @@ _EXPORT_FORMATS = {
     'short' : export_to_short_textgrid,
     # Export to Praat TextGrid in long (i.e., standard) format
     'long' : export_to_long_textgrid,
-    # Export to ELAN .seaf format
+    # Export to ELAN .eaf format
     'eaf' : export_to_elan,
+    # Export to a table
+    'table' : export_to_table
 }
+
 
 
 def write_to_file(textgrid, filename, format='short', encoding='utf-8', **kwargs):
     """Write a TextGrid object to a file in the specified format."""
     with codecs.open(filename, 'w', encoding) as f:
         if format in _EXPORT_FORMATS:
-            f.write(_EXPORT_FORMATS[format](textgrid, encoding, **kwargs))
+            f.write(_EXPORT_FORMATS[format](textgrid, **kwargs))
         else:
             Exception('Unknown output format: {0}'.format(format))
 
