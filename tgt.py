@@ -213,6 +213,64 @@ class IntervalTier(Tier):
                                                self._objects), end)
         return self._objects[index_lo:index_hi]
 
+    def get_nearest_interval(self, time, direction='both', interval_label=r'[^\s]+', exclude_overlapped=False):
+        """Get the nearest interval boundary in self in the specified 
+        direction matching interval_label. Returns a tuple of both boundaries
+        if they are equally far from time and direction is 'both'.
+        If exclude_overlapped is True, the interval time falls into is skipped.
+        """
+
+        index_left = index_right = bisect.bisect_left(map(operator.attrgetter('start_time'),
+                                                          self._objects), time)
+
+        if direction in  ['left', 'both']:
+            if exclude_overlapped:
+                index_left -= 1
+            while not re.search(interval_label, self._objects[index_left].text) and index_left >= 0:
+                index_left -= 1
+
+            if direction == 'left':
+                return self._objects[index_left] if index_left >= 0 else None
+        if exclude_overlapped:
+            index_right += 1
+        while not re.search(interval_label, self._objects[index_right].text) and index_right < len(self._objects):
+            index_right += 1
+
+        if direction == 'right':
+            return self._objects[index_right] if index_right < len(self._objects) else None
+
+        else:
+            distance_left = time - self._objects[index_left].end_time
+            distance_right = self._objects[index_right].start_time - time
+            if distance_left < distance_right:
+                return self._objects[index_left]
+            elif distance_left > distance_right:
+                return self._objects[index_right]
+            else:
+                return self._objects[index_left], self._objects[index_right]
+                
+                
+        
+        
+            
+
+        
+
+        
+        
+    def get_intervals_with_regex(self, regex=r'[^\s]+', n=0):
+        """Get the intervals with the specified text.
+        Returns the first n results for n > 0 and the last n results for n < 0.
+        """
+        result = [x for x in self.intervals if re.search(regex, x)]
+        if limit == 0:
+            return result # Return all matching intervals
+        elif limit > 0:
+            return result[:n] # Return the first n matching intervals
+        else: # i.e., limit < 0
+            return result[n:] # Return the last n matching intervals
+
+            
     def get_intervals_with_text(self, text, n=0):
         """Get the intervals with the specified text.
         Returns the first n results for n > 0 and the last n results for n < 0.
