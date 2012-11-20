@@ -147,7 +147,7 @@ class IntervalTier(Tier):
             name, objects)
     
     def add_intervals(self, intervals):
-        """Add a list of intervals to this tier."""
+        """Add a lisel of intervals to this tier."""
         self._add_objects(intervals, Interval)
         
     def add_interval(self, interval):
@@ -162,6 +162,46 @@ class IntervalTier(Tier):
 
     intervals = property(fget=_get_intervals,
                 doc='The list of intervals of this tier.')
+
+
+    def shift_boundaries(self, left, right):
+        """Return a copy of the tier with  boundaries of each interval shifted by the specified
+        amount of time (in seconds). Positive values expand intervals and negative values shrink
+        them, i.e.:
+        * positive value of left shifts the left boundary to the left
+        * negative value of left shifts the left boundary to the right
+        * positive value of right shifts the right boundary to the right
+        * negative value of right shifts the right boundary to the left.
+        """
+        
+
+        tier_end_shifted = self.end_time + left + right
+        tier_shifted = IntervalTier(start_time=0,
+                                    end_time=tier_end_shifted,
+                                    name=self.name)
+
+        for i in range(len(self.intervals)):
+
+            if self.intervals[i].end_time <= left * -1:
+                continue
+            elif i > 0 and self.intervals[i].start_time >= left * -1:
+                interval_start_shifted = self.intervals[i].start_time + left
+            else:
+                interval_start_shifted = 0
+
+
+            interval_end_shifted = self.intervals[i].end_time + left
+            if (interval_start_shifted >= tier_end_shifted):
+                break
+            elif i == len(self.intervals) - 1 or interval_end_shifted > tier_end_shifted:
+                interval_end_shifted = tier_end_shifted
+
+            tier_shifted.add_interval(Interval(interval_start_shifted,
+                                               interval_end_shifted,
+                                               self.intervals[i].text))
+        return tier_shifted
+
+            
 
     def get_interval_at_time(self, time):
         """Get interval at the specified time (or None)."""
