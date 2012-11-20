@@ -181,17 +181,17 @@ class IntervalTier(Tier):
                                     end_time=tier_end_shifted,
                                     name=self.name)
 
-        for i in range(len(self.intervals)):
+        for i, interval in enumerate(self.intervals):
 
-            if self.intervals[i].end_time <= left * -1:
+            if interval.end_time <= left * -1:
                 continue
-            elif i > 0 and self.intervals[i].start_time >= left * -1:
-                interval_start_shifted = self.intervals[i].start_time + left
+            elif i > 0 and interval.start_time > left * -1:
+                interval_start_shifted = interval.start_time + left
             else:
                 interval_start_shifted = 0
 
 
-            interval_end_shifted = self.intervals[i].end_time + left
+            interval_end_shifted = interval.end_time + left
             if (interval_start_shifted >= tier_end_shifted):
                 break
             elif i == len(self.intervals) - 1 or interval_end_shifted > tier_end_shifted:
@@ -199,7 +199,7 @@ class IntervalTier(Tier):
 
             tier_shifted.add_interval(Interval(interval_start_shifted,
                                                interval_end_shifted,
-                                               self.intervals[i].text))
+                                               interval.text))
         return tier_shifted
 
             
