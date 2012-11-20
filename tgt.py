@@ -165,9 +165,10 @@ class IntervalTier(Tier):
 
 
     def shift_boundaries(self, left, right):
-        """Return a copy of the tier with  boundaries of each interval shifted by the specified
-        amount of time (in seconds). Positive values expand intervals and negative values shrink
-        them, i.e.:
+        """
+        Return a copy of the tier with boundaries shifted by the specified
+        amount of time (in seconds). Positive values expand the tier and negative values shrink
+        it, i.e.:
         * positive value of left shifts the left boundary to the left
         * negative value of left shifts the left boundary to the right
         * positive value of right shifts the right boundary to the right
