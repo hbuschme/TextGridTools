@@ -54,6 +54,14 @@ class TextGrid(object):
         """Add a tier."""
         self.tiers.append(tier)
 
+    def del_tiers(self, tier_names, complement=False):
+        """If complement is False (the default), delete tiers with the specified names.
+        If complement is True, delete tiers with names other than those specified."""
+        if not complement:
+            self.tiers = [tier for tier in self.tiers if tier.name not in tier_names]
+        else:
+            self.tiers = [tier for tier in self.tiers if tier.name in tier_names]
+        
     def insert_tier(self, tier, position):
         """Insert a tier at the specified position."""
         self.tiers.insert(position, tier)
@@ -289,15 +297,6 @@ class IntervalTier(Tier):
                 return self._objects[index_right]
             else:
                 return self._objects[index_left], self._objects[index_right]
-                
-                
-        
-        
-            
-
-        
-
-        
         
     def get_intervals_with_regex(self, regex=r'[^\s]+', n=0):
         """Get the intervals with the specified text.
@@ -781,3 +780,49 @@ def get_overlapping_intervals(tier1, tier2, regex=r'[^\s]+', overlap_label='over
         else:
             j += 1
     return overlaps
+
+def concatenate_textgrids(textgrids, ignore_nonmatching_tiers=False):
+    """Concatenate Tiers with matching names. TextGrids are concatenated
+    in the order they are specified. If ignore_nonmatching_tiers is False
+    (the default), an exception is raised if the number and the names of
+     tiers differ between TextGrids."""
+
+    tier_names_intersection = reduce(lambda x, y: x.intersection(y),
+                                     map(lambda x: set(x.get_tier_names()),
+                                         textgrids))
+    # Check whether the TextGrids have the same number of tiers
+    # and whether tier names match. If they don't 
+    # and if ignore_nonmatching_tiers is False, raise an exception.
+    if (not ignore_nonmatching_tiers
+        and not all([len(tier_names_intersection) == len(x.tiers) for x in textgrids])):
+        raise Exception('TextGrids have different numbers of tiers or tier names do not match.')
+
+    tot_duration = 0
+    tiers = {} # tier_name : tgt.Tier()
+
+    for textgrid in textgrids:
+        for tier in textgrid.tiers:
+            if tier.name not in tier_names_intersection:
+                continue
+            intervals = []
+
+            # If this is the first we see this tier, we just make a copy
+            # of it as it is.
+            if tier.name not in tiers.keys():
+                tiers[tier.name] = copy.deepcopy(tier)
+            # Otherwise we update the start and end times of intervals
+            # and append them to the first part.
+            else:
+                for interval in tier.intervals:
+                    interval.start_time += tot_duration
+                    interval.end_time += tot_duration
+                    intervals.append(interval)
+                tiers[tier.name].add_intervals(intervals)
+        tot_duration += textgrid.end_time
+
+    # Create a new TextGrid and add the concatenated tiers
+    textgrid_concatenated = TextGrid()
+    # Add tiers in the order they're found in the first TextGrid.
+    textgrid_concatenated.add_tiers([tiers[x] for x in tier_names_intersection])
+    return textgrid_concatenated
+

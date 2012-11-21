@@ -36,55 +36,13 @@ def parse_arguments():
                         help='File encoding (defaults to UTF-8).')
     return vars(argparser.parse_args())
 
-def concatenate_textgrids(input_files, encoding):
-    """Concatenate Tiers with matching names. TextGrids are concatenated
-    in the order they are specified. The number and the names of tiers
-    must be the same in each TextGrid."""
-    
-    # Read all TextGrids into a list.
-    textgrids = [tgt.read_textgrid(path, encoding) for path in input_files]
-
-    # Check whether the TextGrids have the same number of tiers.
-    ntiers = [len(x) for x in textgrids]
-    assert all([ntiers[0] == x for x in ntiers[1:]]),\
-            'TextGrids have different numbers of tiers.'
-
-    # Check whether tiers in the TextGrids have the same names.
-    tier_names = [sorted(x.get_tier_names()) for x in textgrids]
-    assert all([tier_names[0] == x for x in tier_names[1:]]),\
-           'Names of tiers do not match.' 
-
-    tot_duration = 0
-    tiers = {} # tier_name : tgt.Tier()
-
-    for textgrid in textgrids:
-        for tier in textgrid.tiers:
-            intervals = []
-
-            # If this is the first we see this tier, we just make a copy
-            # of it as it is.
-            if tier.name not in tiers.keys():
-                tiers[tier.name] = copy.deepcopy(tier)
-            # Otherwise we update the start and end times of intervals
-            # and append them to the first part.
-            else:
-                for interval in tier.intervals:
-                    interval.left_bound += tot_duration
-                    interval.right_bound += tot_duration
-                    intervals.append(interval)
-                tiers[tier.name].add_intervals(intervals)
-        tot_duration += textgrid.end_time()
-
-    # Create a new TextGrid
-    textgrid_concatenated = tgt.TextGrid()
-    # Add tiers in the order they're found in the first TextGrid.
-    textgrid_concatenated.add_tiers([tiers[x] for x in textgrids[0].get_tier_names()])
-    return textgrid_concatenated
-
 def main():
     # Parse the command-line arguments.
     args = parse_arguments()
-    textgrid_concatenated = concatenate_textgrids(args['input_files'], args['encoding'])
+
+    # Read all TextGrids into a list.
+    textgrids = [tgt.read_textgrid(path, args['encoding']) for path in args['input_files']]
+    textgrid_concatenated = tgt.concatenate_textgrids(textgrids)
     # Write the concatenated TextGrid to a file.
     textgrid_concatenated.write_to_file(args['output_file'][0], args['encoding'])
 
