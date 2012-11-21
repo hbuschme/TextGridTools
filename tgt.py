@@ -269,7 +269,7 @@ class IntervalTier(Tier):
         If exclude_overlapped is True, the interval time falls into is skipped.
         """
 
-        index_left = index_right = bisect.bisect_left(map(operator.attrgetter('start_time'),
+        index_left = index_right = bisect.bisect_right(map(operator.attrgetter('end_time'),
                                                           self._objects), time)
 
         if direction in  ['left', 'both']:
