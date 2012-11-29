@@ -826,3 +826,27 @@ def concatenate_textgrids(textgrids, ignore_nonmatching_tiers=False):
     textgrid_concatenated.add_tiers([tiers[x] for x in tier_names_intersection])
     return textgrid_concatenated
 
+
+    
+def merge_textgrids(textgrids, ignore_duplicates=True):
+    """Return a TextGrid object with tiers in all textgrids. If ignore_duplicates
+    is False, tiers with equal names are renamed by adding a path of the textgrid or
+    a unique number incremented with each occurrence."""
+
+    tg_merged = TextGrid()
+    tier_duplicates_lookup = collections.defaultdict(int)
+    for tg in textgrids:
+        for tier in tg.tiers:
+            tier_copy = copy.deepcopy(tier)
+            if tg_merged.has_tier(tier.name):
+                if not ignore_duplicates:
+                    if  tg.filename.strip() != '':
+                        tier_copy.name += '_' + tg.filename
+                    else:
+                        tier_duplicates_lookup[tier.name] += 1
+                        tier_copy.name += '_' + str(tier_duplicates_lookup[tier.name])
+                else:
+                    continue
+            tg_merged.add_tier(tier_copy)
+    return tg_merged
+
