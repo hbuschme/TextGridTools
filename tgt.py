@@ -272,17 +272,17 @@ class IntervalTier(Tier):
         index_left = index_right = bisect.bisect_right(map(operator.attrgetter('end_time'),
                                                           self._objects), time)
 
-        if direction in  ['left', 'both']:
+        if direction in ['left', 'both']:
             if exclude_overlapped:
                 index_left -= 1
-            while not re.search(interval_label, self._objects[index_left].text) and index_left >= 0:
+            while index_left >= 0 and not re.search(interval_label, self._objects[index_left].text):
                 index_left -= 1
 
             if direction == 'left':
                 return self._objects[index_left] if index_left >= 0 else None
         if exclude_overlapped:
             index_right += 1
-        while not re.search(interval_label, self._objects[index_right].text) and index_right < len(self._objects):
+        while index_right < len(self._objects) and not re.search(interval_label, self._objects[index_right].text):
             index_right += 1
 
         if direction == 'right':
