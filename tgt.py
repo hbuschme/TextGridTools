@@ -302,12 +302,12 @@ class IntervalTier(Tier):
         """Get the intervals with the specified text.
         Returns the first n results for n > 0 and the last n results for n < 0.
         """
-        result = [x for x in self.intervals if re.search(regex, x)]
-        if limit == 0:
+        result = [x for x in self.intervals if re.search(regex, x.text)]
+        if n == 0:
             return result # Return all matching intervals
-        elif limit > 0:
+        elif n > 0:
             return result[:n] # Return the first n matching intervals
-        else: # i.e., limit < 0
+        else: # i.e., n < 0
             return result[n:] # Return the last n matching intervals
 
             
@@ -316,11 +316,11 @@ class IntervalTier(Tier):
         Returns the first n results for n > 0 and the last n results for n < 0.
         """
         result = [x for x in self.intervals if x.text == text]
-        if limit == 0:
+        if n == 0:
             return result # Return all matching intervals
-        elif limit > 0:
+        elif n > 0:
             return result[:n] # Return the first n matching intervals
-        else: # i.e., limit < 0
+        else: # i.e., n < 0
             return result[n:] # Return the last n matching intervals
 
 
@@ -374,11 +374,11 @@ class PointTier(Tier):
         Returns the first n results for n > 0 and the last n results for n < 0.
         """
         result = [x for x in self.points if x.text == text]
-        if limit == 0:
+        if n == 0:
             return result # Return all matching points
-        elif limit > 0:
+        elif n > 0:
             return result[:n] # Return the first n matching points
-        else: # i.e., limit < 0
+        else: # i.e., n < 0
             return result[n:] # Return the last n matching points
     
 
