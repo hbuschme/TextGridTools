@@ -299,9 +299,22 @@ class IntervalTier(Tier):
                 return self._objects[index_left], self._objects[index_right]
         
     def get_intervals_with_regex(self, regex=r'[^\s]+', n=0):
-        """Get the intervals with the specified text.
-        Returns the first n results for n > 0 and the last n results for n < 0.
+        """Get intervals with text matching the specified regular expression.
+
+        Parameters
+        ----------
+        regex : str
+            Regular expression to match against (r'[^\s]+' by default).
+        n : int
+            The number of matches to return.
+            If n > 0 the first n matches are returned, if n < 0, the last n
+            matches are returned, if n = 0 (the default) all matches are returned.
+
+        Returns
+        -------
+        List of matched intervals.
         """
+
         result = [x for x in self.intervals if re.search(regex, x.text)]
         if n == 0:
             return result # Return all matching intervals
@@ -312,9 +325,22 @@ class IntervalTier(Tier):
 
             
     def get_intervals_with_text(self, text, n=0):
-        """Get the intervals with the specified text.
-        Returns the first n results for n > 0 and the last n results for n < 0.
+        """Get intervals with the specified text.
+
+        Parameters
+        ----------
+        text : str
+            String to match against.
+        n : int
+            The number of matches to return.
+            If n > 0 the first n matches are returned, if n < 0, the last n
+            matches are returned, if n = 0 (the default) all matches are returned.
+
+        Returns
+        -------
+        List of matched intervals.
         """
+
         result = [x for x in self.intervals if x.text == text]
         if n == 0:
             return result # Return all matching intervals
@@ -370,9 +396,22 @@ class PointTier(Tier):
         return self._objects[index_lo:index_hi]
 
     def get_points_with_text(self, text, n=0):
-        """Get the points with the specified text.
-        Returns the first n results for n > 0 and the last n results for n < 0.
+        """Get points with the specified text.
+
+        Parameters
+        ----------
+        text : str
+            String to match against.
+        n : int
+            The number of matches to return.
+            If n > 0 the first n matches are returned, if n < 0, the last n
+            matches are returned, if n = 0 (the default) all matches are returned.
+
+        Returns
+        -------
+        List of matched points.
         """
+
         result = [x for x in self.points if x.text == text]
         if n == 0:
             return result # Return all matching points
