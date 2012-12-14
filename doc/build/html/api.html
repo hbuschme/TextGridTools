@@ -1,0 +1,445 @@
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Documentation &mdash; TextGridTools 0.9.0 documentation</title>
+    
+    <link rel="stylesheet" href="_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '',
+        VERSION:     '0.9.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="TextGridTools 0.9.0 documentation" href="index.html" />
+    <link rel="prev" title="Welcome to TextGridTools’s documentation!" href="index.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="index.html" title="Welcome to TextGridTools’s documentation!"
+             accesskey="P">previous</a> |</li>
+        <li><a href="index.html">TextGridTools 0.9.0 documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="module-tgt">
+<span id="documentation"></span><h1>Documentation<a class="headerlink" href="#module-tgt" title="Permalink to this headline">¶</a></h1>
+<dl class="class">
+<dt id="tgt.TextGrid">
+<em class="property">class </em><tt class="descclassname">tgt.</tt><tt class="descname">TextGrid</tt><big>(</big><em>filename=''</em><big>)</big><a class="headerlink" href="#tgt.TextGrid" title="Permalink to this definition">¶</a></dt>
+<dd><p>A TextGrid.</p>
+<dl class="method">
+<dt id="tgt.TextGrid.add_tier">
+<tt class="descname">add_tier</tt><big>(</big><em>tier</em><big>)</big><a class="headerlink" href="#tgt.TextGrid.add_tier" title="Permalink to this definition">¶</a></dt>
+<dd><p>Add a tier.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="tgt.TextGrid.add_tiers">
+<tt class="descname">add_tiers</tt><big>(</big><em>tiers</em><big>)</big><a class="headerlink" href="#tgt.TextGrid.add_tiers" title="Permalink to this definition">¶</a></dt>
+<dd><p>Add a list of tiers.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="tgt.TextGrid.del_tiers">
+<tt class="descname">del_tiers</tt><big>(</big><em>tier_names</em>, <em>complement=False</em><big>)</big><a class="headerlink" href="#tgt.TextGrid.del_tiers" title="Permalink to this definition">¶</a></dt>
+<dd><p>If complement is False (the default), delete tiers with the specified names.
+If complement is True, delete tiers with names other than those specified.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="tgt.TextGrid.end_time">
+<tt class="descname">end_time</tt><a class="headerlink" href="#tgt.TextGrid.end_time" title="Permalink to this definition">¶</a></dt>
+<dd><p>TextGrid end time.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="tgt.TextGrid.get_tier_by_name">
+<tt class="descname">get_tier_by_name</tt><big>(</big><em>name</em><big>)</big><a class="headerlink" href="#tgt.TextGrid.get_tier_by_name" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get tier of specified name name.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="tgt.TextGrid.get_tier_names">
+<tt class="descname">get_tier_names</tt><big>(</big><big>)</big><a class="headerlink" href="#tgt.TextGrid.get_tier_names" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get names of all tiers.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="tgt.TextGrid.has_tier">
+<tt class="descname">has_tier</tt><big>(</big><em>name</em><big>)</big><a class="headerlink" href="#tgt.TextGrid.has_tier" title="Permalink to this definition">¶</a></dt>
+<dd><p>Check whether TextGrid has a tier of the specified name.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="tgt.TextGrid.insert_tier">
+<tt class="descname">insert_tier</tt><big>(</big><em>tier</em>, <em>position</em><big>)</big><a class="headerlink" href="#tgt.TextGrid.insert_tier" title="Permalink to this definition">¶</a></dt>
+<dd><p>Insert a tier at the specified position.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="tgt.TextGrid.start_time">
+<tt class="descname">start_time</tt><a class="headerlink" href="#tgt.TextGrid.start_time" title="Permalink to this definition">¶</a></dt>
+<dd><p>TextGrid start time.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="tgt.IntervalTier">
+<em class="property">class </em><tt class="descclassname">tgt.</tt><tt class="descname">IntervalTier</tt><big>(</big><em>start_time=0</em>, <em>end_time=0</em>, <em>name=''</em>, <em>objects=None</em><big>)</big><a class="headerlink" href="#tgt.IntervalTier" title="Permalink to this definition">¶</a></dt>
+<dd><p>An IntervalTier.</p>
+<dl class="method">
+<dt id="tgt.IntervalTier.add_interval">
+<tt class="descname">add_interval</tt><big>(</big><em>interval</em><big>)</big><a class="headerlink" href="#tgt.IntervalTier.add_interval" title="Permalink to this definition">¶</a></dt>
+<dd><p>Add an interval to this tier. Insert an empty interval if
+necessary.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="tgt.IntervalTier.add_intervals">
+<tt class="descname">add_intervals</tt><big>(</big><em>intervals</em><big>)</big><a class="headerlink" href="#tgt.IntervalTier.add_intervals" title="Permalink to this definition">¶</a></dt>
+<dd><p>Add a lisel of intervals to this tier.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="tgt.IntervalTier.get_interval_at_time">
+<tt class="descname">get_interval_at_time</tt><big>(</big><em>time</em><big>)</big><a class="headerlink" href="#tgt.IntervalTier.get_interval_at_time" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get interval at the specified time (or None).</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="tgt.IntervalTier.get_interval_by_end_time">
+<tt class="descname">get_interval_by_end_time</tt><big>(</big><em>end_time</em><big>)</big><a class="headerlink" href="#tgt.IntervalTier.get_interval_by_end_time" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get interval with the specified right bound (or None).</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="tgt.IntervalTier.get_interval_by_start_time">
+<tt class="descname">get_interval_by_start_time</tt><big>(</big><em>start_time</em><big>)</big><a class="headerlink" href="#tgt.IntervalTier.get_interval_by_start_time" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get interval with the specified left bound (or None).</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="tgt.IntervalTier.get_intervals_between_timepoints">
+<tt class="descname">get_intervals_between_timepoints</tt><big>(</big><em>start</em>, <em>end</em>, <em>left_overlap=False</em>, <em>right_overlap=False</em><big>)</big><a class="headerlink" href="#tgt.IntervalTier.get_intervals_between_timepoints" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get intervals between start and end. If left_overlap or
+right_overlap is False (the default) intervals overlapping
+with start or end are excluded.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="tgt.IntervalTier.get_intervals_with_regex">
+<tt class="descname">get_intervals_with_regex</tt><big>(</big><em>regex='[^\s]+'</em>, <em>n=0</em><big>)</big><a class="headerlink" href="#tgt.IntervalTier.get_intervals_with_regex" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get intervals with text matching the specified regular expression.</p>
+<dl class="docutils">
+<dt>regex <span class="classifier-delimiter">:</span> <span class="classifier">str</span></dt>
+<dd>Regular expression to match against (r&#8217;[^s]+&#8217; by default).</dd>
+<dt>n <span class="classifier-delimiter">:</span> <span class="classifier">int</span></dt>
+<dd>The number of matches to return.
+If n &gt; 0 the first n matches are returned, if n &lt; 0, the last n
+matches are returned, if n = 0 (the default) all matches are returned.</dd>
+</dl>
+<p>List of matched intervals.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="tgt.IntervalTier.get_intervals_with_text">
+<tt class="descname">get_intervals_with_text</tt><big>(</big><em>text</em>, <em>n=0</em><big>)</big><a class="headerlink" href="#tgt.IntervalTier.get_intervals_with_text" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get intervals with the specified text.</p>
+<dl class="docutils">
+<dt>text <span class="classifier-delimiter">:</span> <span class="classifier">str</span></dt>
+<dd>String to match against.</dd>
+<dt>n <span class="classifier-delimiter">:</span> <span class="classifier">int</span></dt>
+<dd>The number of matches to return.
+If n &gt; 0 the first n matches are returned, if n &lt; 0, the last n
+matches are returned, if n = 0 (the default) all matches are returned.</dd>
+</dl>
+<p>List of matched intervals.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="tgt.IntervalTier.get_nearest_interval">
+<tt class="descname">get_nearest_interval</tt><big>(</big><em>time</em>, <em>direction='both'</em>, <em>interval_label='[^\s]+'</em>, <em>exclude_overlapped=False</em><big>)</big><a class="headerlink" href="#tgt.IntervalTier.get_nearest_interval" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the nearest interval boundary in self in the specified 
+direction matching interval_label. Returns a tuple of both boundaries
+if they are equally far from time and direction is &#8216;both&#8217;.
+If exclude_overlapped is True, the interval time falls into is skipped.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="tgt.IntervalTier.intervals">
+<tt class="descname">intervals</tt><a class="headerlink" href="#tgt.IntervalTier.intervals" title="Permalink to this definition">¶</a></dt>
+<dd><p>The list of intervals of this tier.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="tgt.IntervalTier.shift_boundaries">
+<tt class="descname">shift_boundaries</tt><big>(</big><em>left</em>, <em>right</em><big>)</big><a class="headerlink" href="#tgt.IntervalTier.shift_boundaries" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return a copy of the tier with boundaries shifted by the specified
+amount of time (in seconds). Positive values expand the tier and negative values shrink
+it, i.e.:
+* positive value of left shifts the left boundary to the left
+* negative value of left shifts the left boundary to the right
+* positive value of right shifts the right boundary to the right
+* negative value of right shifts the right boundary to the left.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="tgt.Interval">
+<em class="property">class </em><tt class="descclassname">tgt.</tt><tt class="descname">Interval</tt><big>(</big><em>start_time</em>, <em>end_time</em>, <em>text=''</em><big>)</big><a class="headerlink" href="#tgt.Interval" title="Permalink to this definition">¶</a></dt>
+<dd><p>An interval of two points of time with an attached text label.</p>
+<dl class="method">
+<dt id="tgt.Interval.duration">
+<tt class="descname">duration</tt><big>(</big><big>)</big><a class="headerlink" href="#tgt.Interval.duration" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get duration of this interval.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="tgt.PointTier">
+<em class="property">class </em><tt class="descclassname">tgt.</tt><tt class="descname">PointTier</tt><big>(</big><em>start_time=0</em>, <em>end_time=0</em>, <em>name=''</em>, <em>objects=None</em><big>)</big><a class="headerlink" href="#tgt.PointTier" title="Permalink to this definition">¶</a></dt>
+<dd><p>A PointTier (also &#8220;TextTier&#8221;).</p>
+<dl class="method">
+<dt id="tgt.PointTier.add_point">
+<tt class="descname">add_point</tt><big>(</big><em>point</em><big>)</big><a class="headerlink" href="#tgt.PointTier.add_point" title="Permalink to this definition">¶</a></dt>
+<dd><p>Add a point to this tier.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="tgt.PointTier.add_points">
+<tt class="descname">add_points</tt><big>(</big><em>points</em><big>)</big><a class="headerlink" href="#tgt.PointTier.add_points" title="Permalink to this definition">¶</a></dt>
+<dd><p>Adds a list of points to this tier.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="tgt.PointTier.get_point_at_time">
+<tt class="descname">get_point_at_time</tt><big>(</big><em>time</em><big>)</big><a class="headerlink" href="#tgt.PointTier.get_point_at_time" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get point at specified point of time.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="tgt.PointTier.get_points_between_timepoints">
+<tt class="descname">get_points_between_timepoints</tt><big>(</big><em>start</em>, <em>end</em>, <em>left_inclusive=False</em>, <em>right_inclusive=False</em><big>)</big><a class="headerlink" href="#tgt.PointTier.get_points_between_timepoints" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get intervals between start and end. If left_inclusive or
+right_inclusive is False (the default) points coinciding
+with start or end are excluded.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="tgt.PointTier.get_points_with_text">
+<tt class="descname">get_points_with_text</tt><big>(</big><em>text</em>, <em>n=0</em><big>)</big><a class="headerlink" href="#tgt.PointTier.get_points_with_text" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get points with the specified text.</p>
+<dl class="docutils">
+<dt>text <span class="classifier-delimiter">:</span> <span class="classifier">str</span></dt>
+<dd>String to match against.</dd>
+<dt>n <span class="classifier-delimiter">:</span> <span class="classifier">int</span></dt>
+<dd>The number of matches to return.
+If n &gt; 0 the first n matches are returned, if n &lt; 0, the last n
+matches are returned, if n = 0 (the default) all matches are returned.</dd>
+</dl>
+<p>List of matched points.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="tgt.PointTier.points">
+<tt class="descname">points</tt><a class="headerlink" href="#tgt.PointTier.points" title="Permalink to this definition">¶</a></dt>
+<dd><p>The list of points of this tier.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="tgt.Point">
+<em class="property">class </em><tt class="descclassname">tgt.</tt><tt class="descname">Point</tt><big>(</big><em>time</em>, <em>text</em><big>)</big><a class="headerlink" href="#tgt.Point" title="Permalink to this definition">¶</a></dt>
+<dd><p>A point of time with an attached text label.</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="tgt.Time">
+<em class="property">class </em><tt class="descclassname">tgt.</tt><tt class="descname">Time</tt><a class="headerlink" href="#tgt.Time" title="Permalink to this definition">¶</a></dt>
+<dd><p>A representation of point in time with a predefined precision.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="tgt.read_textgrid">
+<tt class="descclassname">tgt.</tt><tt class="descname">read_textgrid</tt><big>(</big><em>filename</em>, <em>encoding='utf-8'</em><big>)</big><a class="headerlink" href="#tgt.read_textgrid" title="Permalink to this definition">¶</a></dt>
+<dd><p>Read a Praat TextGrid file and returns a TextGrid object.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="tgt.read_short_textgrid">
+<tt class="descclassname">tgt.</tt><tt class="descname">read_short_textgrid</tt><big>(</big><em>filename</em>, <em>stg</em><big>)</big><a class="headerlink" href="#tgt.read_short_textgrid" title="Permalink to this definition">¶</a></dt>
+<dd><p>Read a Praat short TextGrid file and return a TextGrid object.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="tgt.read_long_textgrid">
+<tt class="descclassname">tgt.</tt><tt class="descname">read_long_textgrid</tt><big>(</big><em>filename</em>, <em>stg</em><big>)</big><a class="headerlink" href="#tgt.read_long_textgrid" title="Permalink to this definition">¶</a></dt>
+<dd><p>Read a Praat long TextGrid file and return a TextGrid object.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="tgt.export_to_short_textgrid">
+<tt class="descclassname">tgt.</tt><tt class="descname">export_to_short_textgrid</tt><big>(</big><em>textgrid</em><big>)</big><a class="headerlink" href="#tgt.export_to_short_textgrid" title="Permalink to this definition">¶</a></dt>
+<dd><p>Convert a TextGrid object into a string of Praat short TextGrid format.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="tgt.export_to_long_textgrid">
+<tt class="descclassname">tgt.</tt><tt class="descname">export_to_long_textgrid</tt><big>(</big><em>textgrid</em><big>)</big><a class="headerlink" href="#tgt.export_to_long_textgrid" title="Permalink to this definition">¶</a></dt>
+<dd><p>Convert a TextGrid object into a string of Praat long TextGrid format.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="tgt.write_to_file">
+<tt class="descclassname">tgt.</tt><tt class="descname">write_to_file</tt><big>(</big><em>textgrid</em>, <em>filename</em>, <em>format='short'</em>, <em>encoding='utf-8'</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#tgt.write_to_file" title="Permalink to this definition">¶</a></dt>
+<dd><p>Write a TextGrid object to a file in the specified format.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="tgt.get_overlapping_intervals">
+<tt class="descclassname">tgt.</tt><tt class="descname">get_overlapping_intervals</tt><big>(</big><em>tier1</em>, <em>tier2</em>, <em>regex='[^\\s]+'</em>, <em>overlap_label='overlap'</em><big>)</big><a class="headerlink" href="#tgt.get_overlapping_intervals" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return a list of overlaps between intervals of tier1 and
+tier2 matching the regular expression. All nonempty intervals
+are included in the search by default.</p>
+</dd></dl>
+
+<span class="target" id="module-agreement"></span><dl class="function">
+<dt id="agreement.cohen_kappa">
+<tt class="descclassname">agreement.</tt><tt class="descname">cohen_kappa</tt><big>(</big><em>a</em><big>)</big><a class="headerlink" href="#agreement.cohen_kappa" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculates Cohen&#8217;s kappa for the input array.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="agreement.fleiss_chance_agreement">
+<tt class="descclassname">agreement.</tt><tt class="descname">fleiss_chance_agreement</tt><big>(</big><em>a</em><big>)</big><a class="headerlink" href="#agreement.fleiss_chance_agreement" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the chance agreement for the input array.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="agreement.fleiss_kappa">
+<tt class="descclassname">agreement.</tt><tt class="descname">fleiss_kappa</tt><big>(</big><em>a</em><big>)</big><a class="headerlink" href="#agreement.fleiss_kappa" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculates Fleiss&#8217;s kappa for the input array (with categories
+in columns and items in rows).</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="agreement.fleiss_observed_agreement">
+<tt class="descclassname">agreement.</tt><tt class="descname">fleiss_observed_agreement</tt><big>(</big><em>a</em><big>)</big><a class="headerlink" href="#agreement.fleiss_observed_agreement" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the observed agreement for the input array.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="agreement.n_raters_table">
+<tt class="descclassname">agreement.</tt><tt class="descname">n_raters_table</tt><big>(</big><em>l</em><big>)</big><a class="headerlink" href="#agreement.n_raters_table" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns a contingency table for n &gt;= 2 raters (with categories
+in columns and items in rows) given a list of zipped labels.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="agreement.produce_aligned_labels_lists">
+<tt class="descclassname">agreement.</tt><tt class="descname">produce_aligned_labels_lists</tt><big>(</big><em>tiers_list</em>, <em>regex='[^\\s]+'</em><big>)</big><a class="headerlink" href="#agreement.produce_aligned_labels_lists" title="Permalink to this definition">¶</a></dt>
+<dd><p>Creates a list of lists of labels matching the specified
+regular expression from time-aligned intervals of the input
+interval tiers.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="agreement.scott_pi">
+<tt class="descclassname">agreement.</tt><tt class="descname">scott_pi</tt><big>(</big><em>a</em><big>)</big><a class="headerlink" href="#agreement.scott_pi" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculates Scott&#8217;s Pi for the input array.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="agreement.two_raters_table">
+<tt class="descclassname">agreement.</tt><tt class="descname">two_raters_table</tt><big>(</big><em>l</em><big>)</big><a class="headerlink" href="#agreement.two_raters_table" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns a contingency table for two raters given a list of
+zipped labels.</p>
+</dd></dl>
+
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="index.html"
+                        title="previous chapter">Welcome to TextGridTools&#8217;s documentation!</a></p>
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="_sources/api.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="index.html" title="Welcome to TextGridTools’s documentation!"
+             >previous</a> |</li>
+        <li><a href="index.html">TextGridTools 0.9.0 documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2012, Hendrik Buschmeier, Marcin Włodarczak.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.1.3.
+    </div>
+  </body>
+</html>
