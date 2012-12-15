@@ -633,7 +633,6 @@ def export_to_short_textgrid(textgrid):
                '<exists>',
                len(textgrid.tiers)]
     textgrid_corrected = correct_end_times(textgrid)
-    quote = lambda x: '"' + unicode(x) + '"'
     for tier in textgrid_corrected.tiers:
         result += ['"' + tier.__class__.__name__ + '"',
                    '"' + tier.name + '"',
