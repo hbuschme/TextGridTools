@@ -294,20 +294,10 @@ class IntervalTier(Tier):
                 return self._objects[index_left], self._objects[index_right]
 
     def get_intervals_with_regex(self, regex=r'[^\s]+', n=0):
-        """Get intervals with text matching the specified regular expression.
-
-        Parameters
-        ----------
-        regex : str
-            Regular expression to match against (r'[^\s]+' by default).
-        n : int
-            The number of matches to return.
-            If n > 0 the first n matches are returned, if n < 0, the last n
-            matches are returned, if n = 0 (the default) all matches are returned.
-
-        Returns
-        -------
-        List of matched intervals.
+        """Get intervals with text matching the specified
+        regular expression ([^\s]+ by default). If n > 0
+        the first n matches are returned, if n < 0, the last n
+        matches are returned, if n = 0 (the default) all matches are returned.
         """
 
         result = [x for x in self.intervals if re.search(regex, x.text)]
@@ -319,20 +309,10 @@ class IntervalTier(Tier):
             return result[n:]  # Return the last n matching intervals
 
     def get_intervals_with_text(self, text, n=0):
-        """Get intervals with the specified text.
-
-        Parameters
-        ----------
-        text : str
-            String to match against.
-        n : int
-            The number of matches to return.
-            If n > 0 the first n matches are returned, if n < 0, the last n
-            matches are returned, if n = 0 (the default) all matches are returned.
-
-        Returns
-        -------
-        List of matched intervals.
+        """Get intervals with the specified text. If n > 0
+        the first n matches are returned, if n < 0, the last n
+        matches are returned, if n = 0 (the default)
+        all matches are returned.
         """
 
         result = [x for x in self.intervals if x.text == text]
@@ -390,20 +370,10 @@ class PointTier(Tier):
         return self._objects[index_lo:index_hi]
 
     def get_points_with_text(self, text, n=0):
-        """Get points with the specified text.
-
-        Parameters
-        ----------
-        text : str
-            String to match against.
-        n : int
-            The number of matches to return.
-            If n > 0 the first n matches are returned, if n < 0, the last n
-            matches are returned, if n = 0 (the default) all matches are returned.
-
-        Returns
-        -------
-        List of matched points.
+        """Get points with the specified text. If n > 0
+        the first n matches are returned, if n < 0, the last n
+        matches are returned, if n = 0 (the default) all
+        matches are returned.
         """
 
         result = [x for x in self.points if x.text == text]
