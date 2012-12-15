@@ -368,7 +368,7 @@ class PointTier(Tier):
 
     def get_point_at_time(self, time):
         """Get point at specified point of time."""
-        index = bisect_left(map(lambda x: x.time, self._objects), time)
+        index = bisect.bisect_left(map(lambda x: x.time, self._objects), time)
         if index != len(self._objects) and self._objects[index].time == time:
             return self._objects[index]
         else:
