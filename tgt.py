@@ -32,8 +32,9 @@ __all__ = [
     'TextGrid', 'IntervalTier', 'Interval', 'PointTier', 'Point', 'Time',
     # Functions
     'read_textgrid', 'read_short_textgrid', 'read_long_textgrid',
-    'export_to_short_textgrid', 'export_to_long_textgrid', 'write_to_file',
-    'get_overlapping_intervals'
+    'export_to_short_textgrid', 'export_to_long_textgrid', 'export_to_elan',
+    'export_to_table', 'write_to_file',
+    'get_overlapping_intervals', 'merge_textgrids', 'concatenate_textgrids'
 ]
 
 
@@ -96,6 +97,10 @@ class TextGrid(object):
     end_time = property(fget=_latest_end_time,
                         doc='TextGrid end time.')
 
+    def __iter__(self):
+        '''Return an iterator over the tiers of this TextGrid.'''
+        return iter(self.tiers)
+
     def __len__(self):
         '''Return the number of tiers.'''
         return len(self.tiers)
@@ -134,6 +139,9 @@ class Tier(object):
         else:
             raise Exception('Could not add object ' + repr(object) + ' to this '
                 + self.__class__.__name__ + '.')
+       
+    def __iter__():
+        return iter(self._objects)
 
     def __len__(self):
         """Return number of intervals/points in this tier."""
@@ -155,7 +163,7 @@ class IntervalTier(Tier):
             name, objects)
 
     def add_intervals(self, intervals):
-        """Add a lisel of intervals to this tier."""
+        """Add a list of intervals to this tier."""
         self._add_objects(intervals, Interval)
 
     def add_interval(self, interval):
@@ -164,8 +172,7 @@ class IntervalTier(Tier):
         self._add_object(interval, Interval)
 
     def _get_intervals(self):
-        """Get all intervals of this tier. Insert empty intervals if
-        necessary."""
+        """Get all intervals of this tier."""
         return self._objects
 
     intervals = property(fget=_get_intervals,
@@ -583,7 +590,7 @@ def correct_end_times(textgrid):
 
     """
     textgrid_copy = copy.deepcopy(textgrid)
-    for tier in textgrid_copy.tiers:
+    for tier in textgrid_copy:
         if isinstance(tier, IntervalTier) and tier.end_time < textgrid_copy.end_time:
             # For interval tiers insert the final empty interval
             # if necessary.
@@ -601,18 +608,18 @@ def export_to_short_textgrid(textgrid):
                textgrid.start_time,
                textgrid.end_time,
                '<exists>',
-               len(textgrid.tiers)]
+               len(textgrid)]
     textgrid_corrected = correct_end_times(textgrid)
-    for tier in textgrid_corrected.tiers:
+    for tier in textgrid_corrected:
         result += ['"' + tier.__class__.__name__ + '"',
                    '"' + tier.name + '"',
                    tier.start_time, tier.end_time, len(tier)]
         if isinstance(tier, IntervalTier):
             result += [u'{0}\n{1}\n"{2}"'.format(obj.start_time, obj.end_time, obj.text)
-                       for obj in tier._objects]
+                       for obj in tier]
         elif isinstance(tier, PointTier):
             result += [u'{0}\n"{1}"'.format(obj.time, obj.text)
-                       for obj in tier._objects]
+                       for obj in tier]
         else:
             Exception('Unknown tier type: {0}'.format(tier.name))
     return '\n'.join(map(unicode, result))
@@ -626,10 +633,10 @@ def export_to_long_textgrid(textgrid):
               'xmin = ' + unicode(textgrid.start_time),
               'xmax = ' + unicode(textgrid.end_time),
               'tiers? <exists>',
-              'size = ' + unicode(len(textgrid.tiers)),
+              'size = ' + unicode(len(textgrid)),
               'item []:']
     textgrid_corrected = correct_end_times(textgrid)
-    for i, tier in enumerate(textgrid_corrected.tiers):
+    for i, tier in enumerate(textgrid_corrected):
         result += ['\titem [{0}]:'.format(i + 1),
                    '\t\tclass = "{0}"'.format(tier.__class__.__name__),
                    '\t\tname = "{0}"'.format(tier.name),
@@ -637,13 +644,13 @@ def export_to_long_textgrid(textgrid):
                    '\t\txmax = ' + unicode(tier.end_time),
                    '\t\tintervals: size = ' + unicode(len(tier))]
         if isinstance(tier, IntervalTier):
-            for j, obj in enumerate(tier._objects):
+            for j, obj in enumerate(tier):
                 result += ['\t\tintervals [{0}]:'.format(j + 1),
                            '\t\t\txmin = ' + unicode(obj.start_time),
                            '\t\t\txmax = ' + unicode(obj.end_time),
                            '\t\t\ttext = "' + obj.text + '"']
         elif isinstance(tier, PointTier):
-            for j, obj in enumerate(tier._objects):
+            for j, obj in enumerate(tier):
                 result += ['\t\tpoints [{0}]:'.format(j + 1),
                            '\t\t\tnumber = ' + obj.time,
                            '\t\t\tmark = "' + obj.text + '"']
@@ -676,7 +683,7 @@ def export_to_elan(textgrid, encoding='utf-8', include_empty_annotations=False,
     # Create annotations
     annotation_id_count = 1
     annotations = []
-    for tier in textgrid.tiers:
+    for tier in textgrid:
         annotations.append(u'<TIER DEFAULT_LOCALE="en" LINGUISTIC_TYPE_REF="default-lt" TIER_ID="{0}">'.format(tier.name))
         if isinstance(tier, IntervalTier):
             for interval in tier.intervals:
@@ -720,14 +727,14 @@ def export_to_table(textgrid, separator=','):
     with the specified separator (comma by default)."""
     result = [separator.join(['tier_name', 'tier_type', 'start_time', 'end_time', 'text'])]
 
-    for tier in textgrid.tiers:
+    for tier in textgrid:
         if isinstance(tier, IntervalTier):
-            for obj in tier._objects:
+            for obj in tier:
                 if obj.text:
                     result.append(separator.join([unicode(tier.name), unicode(tier.__class__.__name__),
                                                   unicode(obj.start_time), unicode(obj.end_time), obj.text]))
         elif isinstance(tier, PointTier):
-            for obj in tier._objects:
+            for obj in tier:
                 result.append(separator.join([unicode(tier.name), unicode(tier.__class__.__name__),
                                               unicode(obj.time), unicode(obj.time), obj.text]))
         else:
@@ -797,14 +804,14 @@ def concatenate_textgrids(textgrids, ignore_nonmatching_tiers=False):
     # and whether tier names match. If they don't
     # and if ignore_nonmatching_tiers is False, raise an exception.
     if (not ignore_nonmatching_tiers
-        and not all([len(tier_names_intersection) == len(x.tiers) for x in textgrids])):
+        and not all([len(tier_names_intersection) == len(tg.tiers) for tg in textgrids])):
         raise Exception('TextGrids have different numbers of tiers or tier names do not match.')
 
     tot_duration = 0
     tiers = {}  # tier_name : tgt.Tier()
 
     for textgrid in textgrids:
-        for tier in textgrid.tiers:
+        for tier in textgrid:
             if tier.name not in tier_names_intersection:
                 continue
             intervals = []
@@ -838,7 +845,7 @@ def merge_textgrids(textgrids, ignore_duplicates=True):
     tg_merged = TextGrid()
     tier_duplicates_lookup = collections.defaultdict(int)
     for tg in textgrids:
-        for tier in tg.tiers:
+        for tier in tg:
             tier_copy = copy.deepcopy(tier)
             if tg_merged.has_tier(tier.name):
                 if not ignore_duplicates:
