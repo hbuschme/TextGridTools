@@ -31,7 +31,7 @@ __all__ = [
     # Classes
     'TextGrid', 'IntervalTier', 'Interval', 'PointTier', 'Point', 'Time',
     # Functions
-    'read_textgrid', 'read_short_textgrid', 'read_long_textgrid',
+    'read_textgrid', #'read_short_textgrid', 'read_long_textgrid',
     'export_to_short_textgrid', 'export_to_long_textgrid', 'export_to_elan',
     'export_to_table', 'write_to_file',
     'get_overlapping_intervals', 'merge_textgrids', 'concatenate_textgrids'
@@ -43,7 +43,7 @@ class TextGrid(object):
 
     def __init__(self, filename=''):
         super(TextGrid, self).__init__()
-        self.tiers = []
+        self._tiers = []
         self.filename = filename
 
     def add_tiers(self, tiers):
@@ -53,23 +53,23 @@ class TextGrid(object):
 
     def add_tier(self, tier):
         """Add a tier."""
-        self.tiers.append(tier)
+        self._tiers.append(tier)
 
     def del_tiers(self, tier_names, complement=False):
         """If complement is False (the default), delete tiers with the specified names.
         If complement is True, delete tiers with names other than those specified."""
         if not complement:
-            self.tiers = [tier for tier in self.tiers if tier.name not in tier_names]
+            self._tiers = [tier for tier in self._tiers if tier.name not in tier_names]
         else:
-            self.tiers = [tier for tier in self.tiers if tier.name in tier_names]
+            self._tiers = [tier for tier in self._tiers if tier.name in tier_names]
 
     def insert_tier(self, tier, position):
         """Insert a tier at the specified position."""
-        self.tiers.insert(position, tier)
+        self._tiers.insert(position, tier)
 
     def get_tier_names(self):
         """Get names of all tiers."""
-        return map(operator.attrgetter('name'), self.tiers)
+        return map(operator.attrgetter('name'), self._tiers)
 
     def has_tier(self, name):
         """Check whether TextGrid has a tier of the specified name."""
@@ -77,33 +77,36 @@ class TextGrid(object):
 
     def get_tier_by_name(self, name):
         """Get tier of specified name name."""
-        for tier in self.tiers:
+        for tier in self._tiers:
             if tier.name == name:
                 return tier
-        raise ValueError('Textgrid ' + self. filename +
+        raise ValueError('Textgrid ' + self.filename +
                     ' does not have a tier called "' + name + '".')
 
     def _earliest_start_time(self):
         '''Return the earliest start time among all tiers.'''
-        return min(map(lambda t: t.start_time, self.tiers))
+        return min(map(lambda t: t.start_time, self._tiers))
 
     start_time = property(fget=_earliest_start_time,
                           doc='TextGrid start time.')
 
     def _latest_end_time(self):
         '''Return the latest end time among all tiers.'''
-        return max(map(lambda t: t.end_time, self.tiers))
+        return max(map(lambda t: t.end_time, self._tiers))
 
     end_time = property(fget=_latest_end_time,
                         doc='TextGrid end time.')
 
+    def __contains__(self, name):
+        return self.has_tier(name)
+
     def __iter__(self):
         '''Return an iterator over the tiers of this TextGrid.'''
-        return iter(self.tiers)
+        return iter(self._tiers)
 
     def __len__(self):
         '''Return the number of tiers.'''
-        return len(self.tiers)
+        return len(self._tiers)
 
 
 class Tier(object):
@@ -804,7 +807,7 @@ def concatenate_textgrids(textgrids, ignore_nonmatching_tiers=False):
     # and whether tier names match. If they don't
     # and if ignore_nonmatching_tiers is False, raise an exception.
     if (not ignore_nonmatching_tiers
-        and not all([len(tier_names_intersection) == len(tg.tiers) for tg in textgrids])):
+        and not all([len(tier_names_intersection) == len(tg) for tg in textgrids])):
         raise Exception('TextGrids have different numbers of tiers or tier names do not match.')
 
     tot_duration = 0
