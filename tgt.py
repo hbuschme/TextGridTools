@@ -442,7 +442,7 @@ class Interval(object):
 class Point(object):
     '''A point of time with an attached text label.'''
 
-    def __init__(self, time, text):
+    def __init__(self, time, text=''):
         super(Point, self).__init__()
         self._time = Time(time)
         self.text = text.strip()
