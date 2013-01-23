@@ -55,10 +55,7 @@ class TextGrid(object):
         """Add a tier."""
         self._tiers.append(tier)
 
-    def _get_tiers(self):
-        return self._tiers
-
-    tiers = property(fget=_get_tiers,
+    tiers = property(fget=lambda self: self._tiers,
                      doc='Tiers in this TextGrid object.')
 
     def del_tiers(self, tier_names, complement=False):
@@ -75,14 +72,14 @@ class TextGrid(object):
 
     def get_tier_names(self):
         """Get names of all tiers."""
-        return map(operator.attrgetter('name'), self._tiers)
+        return [tier.name for tier in self._tiers]
 
     def has_tier(self, name):
         """Check whether TextGrid has a tier of the specified name."""
         return name in self.get_tier_names()
 
     def get_tier_by_name(self, name):
-        """Get tier of specified name name."""
+        """Get tier of specified name."""
         for tier in self._tiers:
             if tier.name == name:
                 return tier
@@ -91,14 +88,14 @@ class TextGrid(object):
 
     def _earliest_start_time(self):
         '''Return the earliest start time among all tiers.'''
-        return min(map(lambda t: t.start_time, self._tiers))
+        return min([tier.start_time for tier in self])
 
     start_time = property(fget=_earliest_start_time,
                           doc='TextGrid start time.')
 
     def _latest_end_time(self):
         '''Return the latest end time among all tiers.'''
-        return max(map(lambda t: t.end_time, self._tiers))
+        return max([tier.end_time for tier in self])
 
     end_time = property(fget=_latest_end_time,
                         doc='TextGrid end time.')
