@@ -636,11 +636,10 @@ def read_long_textgrid(filename, stg):
 ##----------------------------------------------------------------------------
 
 def correct_end_times(textgrid):
-    """Correct then end times of all Tiers of a Textgrid object.
+    """Correct the end times of all Tiers of a Textgrid object.
 
     Modifies the end times of all tiers to textgrid.end_time and (for
     IntervalTiers) adds the final empty intervals if necessary.
-
     """
     textgrid_copy = copy.deepcopy(textgrid)
     for tier in textgrid_copy:
