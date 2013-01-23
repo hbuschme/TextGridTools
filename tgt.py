@@ -401,11 +401,12 @@ class PointTier(Tier):
             return result[n:]  # Return the last n matching points
 
 
-class Interval(object):
-    '''An interval of two points of time with an attached text label.'''
+class AnnotationObject(object):
 
     def __init__(self, start_time, end_time, text=''):
         super(Interval, self).__init__()
+        if start_time > end_time:
+            raise ValueError('Start time after end time.')
         self._start_time = Time(start_time)
         self._end_time = Time(end_time)
         self.text = text.strip()
@@ -414,17 +415,23 @@ class Interval(object):
         return self._start_time
 
     def _set_start_time(self, start_time):
+        if start_time > self.end_time:
+            raise ValueError('Start time after end time.')
         self._start_time = Time(start_time)
 
-    start_time = property(fget=_get_start_time, fset=_set_start_time)
+    start_time = property(fget=_get_start_time, fset=_set_start_time,
+        doc='The start time.')
 
     def _get_end_time(self):
         return self._end_time
 
     def _set_end_time(self, end_time):
+        if end_time < self.start_time:
+            raise ValueError('End time before start time.')
         self._end_time = Time(end_time)
 
-    end_time = property(fget=_get_end_time, fset=_set_end_time)
+    end_time = property(fget=_get_end_time, fset=_set_end_time,
+        doc='The end time.')
 
     def duration(self):
         """Get duration of this interval."""
@@ -432,31 +439,44 @@ class Interval(object):
 
     def __eq__(self, other):
         return (self.start_time == other.start_time
-                    and self.end_time == other.end_time
-                    and self.text == other.text)
+                and self.end_time == other.end_time
+                and self.text == other.text
+                and type(self) == type(other))
+
+    def __repr__(self):
+        return u'AnnotationObject({0}, {1}, "{2}")'.format(self.start_time,
+            self.end_time, self.text)
+
+
+class Interval(AnnotationObject):
+    '''An interval of two points of time with an attached text label.'''
+
+    def __init__(self, start_time, end_time, text=''):
+        super(Interval, self).__init__(start_time, end_time, text)
 
     def __repr__(self):
         return u'Interval({0}, {1}, "{2}")'.format(self.start_time, self.end_time, self.text)
 
 
-class Point(object):
-    '''A point of time with an attached text label.'''
+class Point(AnnotationObject):
+    '''A point of time with an attached text label.
+
+    Internally an AnnotationObject where start time equals end time.
+    '''
 
     def __init__(self, time, text=''):
-        super(Point, self).__init__()
-        self._time = Time(time)
-        self.text = text.strip()
+        super(Point, self).__init__(time, time, text)
 
     def _get_time(self):
-        return self._time
+        '''Return time, i.e., start_time.'''
+        return self._start_time
 
     def _set_time(self, time):
-        self._time = Time(time)
+        '''Set time, i.e., start time and end time.'''
+        self._start_time = self._end_time = Time(time)
 
-    time = start_time = end_time = property(fget=_get_time, fset=_set_time)
-
-    def __eq__(self, other):
-        return self.time == other.time and self.text == other.text
+    time = start_time = end_time = property(fget=_get_time, fset=_set_time,
+        doc='The point of time.')
 
     def __repr__(self):
         return u'Point({0}, "{1}")'.format(self.time, self.text)
