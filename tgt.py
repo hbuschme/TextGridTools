@@ -55,6 +55,12 @@ class TextGrid(object):
         """Add a tier."""
         self._tiers.append(tier)
 
+    def _get_tiers(self):
+        return self._tiers
+
+    tiers = property(fget=_get_tiers,
+                     doc='Tiers in this TextGrid object.')
+
     def del_tiers(self, tier_names, complement=False):
         """If complement is False (the default), delete tiers with the specified names.
         If complement is True, delete tiers with names other than those specified."""
