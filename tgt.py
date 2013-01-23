@@ -406,9 +406,25 @@ class Interval(object):
 
     def __init__(self, start_time, end_time, text=''):
         super(Interval, self).__init__()
-        self.start_time = Time(start_time)
-        self.end_time = Time(end_time)
+        self._start_time = Time(start_time)
+        self._end_time = Time(end_time)
         self.text = text.strip()
+
+    def _get_start_time(self):
+        return self._start_time
+
+    def _set_start_time(self, start_time):
+        self._start_time = Time(start_time)
+
+    start_time = property(fget=_get_start_time, fset=_set_start_time)
+
+    def _get_end_time(self):
+        return self._end_time
+
+    def _set_end_time(self, end_time):
+        self._end_time = Time(end_time)
+
+    end_time = property(fget=_get_end_time, fset=_set_end_time)
 
     def duration(self):
         """Get duration of this interval."""
@@ -428,8 +444,16 @@ class Point(object):
 
     def __init__(self, time, text):
         super(Point, self).__init__()
-        self.time = Time(time)
+        self._time = Time(time)
         self.text = text.strip()
+
+    def _get_time(self):
+        return self._time
+
+    def _set_time(self, time):
+        self._time = Time(time)
+
+    time = start_time = end_time = property(fget=_get_time, fset=_set_time)
 
     def __eq__(self, other):
         return self.time == other.time and self.text == other.text
