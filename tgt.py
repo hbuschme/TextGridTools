@@ -149,7 +149,7 @@ class Tier(object):
             raise Exception('Could not add object ' + repr(object) + ' to this '
                 + self.__class__.__name__ + '.')
        
-    def __iter__():
+    def __iter__(self):
         return iter(self._objects)
 
     def __len__(self):
