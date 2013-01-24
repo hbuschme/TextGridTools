@@ -480,10 +480,10 @@ class AnnotationObject(object):
         return self.end_time - self.start_time
 
     def __eq__(self, other):
-        return (self.start_time == other.start_time
+        return (type(self) == type(other)
+                and self.start_time == other.start_time
                 and self.end_time == other.end_time
-                and self.text == other.text
-                and type(self) == type(other))
+                and self.text == other.text)
 
     def __repr__(self):
         return u'AnnotationObject({0}, {1}, "{2}")'.format(self.start_time,
