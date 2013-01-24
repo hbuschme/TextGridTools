@@ -127,48 +127,206 @@ class Tier(object):
 
     def __init__(self, start_time=0, end_time=0, name='', objects=None):
         super(Tier, self).__init__()
-        self._objects = []
-        self.start_time = Time(start_time)
-        self.end_time = Time(end_time)
+        self._specd_start_time = Time(start_time)
+        self._specd_end_time = Time(end_time)
         self.name = name
+        self._objects = []
         if objects is not None and objects != []:
-            self._add_objects(objects, type=type(objects[0]))
+            self._add_objects(objects)
 
-    def _add_objects(self, objects, type=None):
-        """Add a list of intervals or a list of points to this tier."""
-        for obj in objects:
-            self._add_object(obj, type)
-
-    def _add_object(self, object, type):
-        """Add an interval or point to this tier. For intervals tiers
-        insert an empty interval if necessary."""
-        if isinstance(object, type):
-            if isinstance(object, Interval):
-                if self.end_time < object.start_time:
-                    # Add an empty interval (if necessary).
-                    empty_interval = Interval(self.end_time, object.start_time, '')
-                    self._objects.append(empty_interval)
-                self.end_time = object.end_time
-            elif isinstance(object, Point):
-                self.end_time = object.time
-            self._objects.append(object)
+    def _get_start_time(self):
+        '''Get start time of this tier.'''
+        if len(self._objects) > 0:
+            return min([self._objects[0].start_time, self._specd_start_time])
         else:
-            raise Exception('Could not add object ' + repr(object) + ' to this '
-                + self.__class__.__name__ + '.')
+            return self._specd_start_time
+
+    start_time = property(fget=_get_start_time, doc='Start time.')
+
+    def _get_end_time(self):
+        '''Get end time of this tier.'''
+        if len(self._objects) > 0:
+            return max([self._objects[-1].end_time, self._specd_end_time])
+        else:
+            return self._specd_end_time
+
+    end_time = property(fget=_get_end_time, doc='End time.')
+
+    def _add_object(self, obj):
+        '''Adds an annotation object to this tier.
+
+        The annotation object is inserted at the correct position within the
+        tier. If the space is already (partially) occupied by a different
+        annotation object, a ValueError is raised.
+        '''
+        if ((len(self._objects) > 0 and obj.start_time >= self._objects[-1].end_time) 
+                or len(self._objects) == 0): # can we simply append obj?
+            self._objects.append(obj)
+        else: # no, we need to insert it
+            overlapping_objects = self._get_objects_between_timepoints(
+                obj.start_time, obj.end_time, 
+                left_overlap=True, right_overlap=True)
+            if overlapping_objects == []:
+                start_timepoints = [interval.start_time for interval in self._objects]
+                position = bisect.bisect_left(start_timepoints, obj.start_time)
+                self._objects.insert(position, obj)
+            else:
+                raise ValueError(
+                    'Could not add object {0} to this tier: Overlap.'.format(
+                        repr(object)))
+
+    def _add_objects(self, objects):
+        """Add a sequence of annotation objects."""
+        for obj in objects:
+            self._add_object(obj)
+
+    def _get_object_by_start_time(self, time):
+        '''Get the annotation object that starts at time.'''
+        idx = bisect.bisect_left([obj.start_time for obj in self], time)
+        if (idx < len(self) and self._objects[idx].start_time == time):
+            return self._objects[idx]
+        else:
+            return None
+
+    def _get_object_by_end_time(self, time):
+        '''Get the annotation object that ends at time.'''
+        idx = bisect.bisect_left([obj.end_time for obj in self], time)
+        if (idx < len(self) and self._objects[idx].end_time == time):
+            return self._objects[idx]
+        else:
+            return None
+
+    def _get_objects_by_time(self, time):
+        '''Get annotation objects at the specified time.'''
+        idx = bisect.bisect_left([obj.end_time for obj in self], time)
+        if (idx < len(self._objects) and 
+            time >= self._objects[idx].start_time):
+            if (len(self._objects) > idx+1
+                and self._objects[idx+1].start_time == time):
+                return [self._objects[idx], self._objects[idx+1]]
+            else:
+                return [self._objects[idx]]
+        else:
+            return []
+
+    def _get_objects_between_timepoints(self, start, end, left_overlap=False, right_overlap=False):
+        '''Get annotation objects between start and end.
+
+        If left_overlap or right_overlap is False annotation objects
+        overlapping with start or end are excluded.
+        '''
+        start_timepoints = [interval.start_time for interval in self._objects]
+        end_timepoints = [interval.end_time for interval in self._objects]
+        if left_overlap:
+            index_lo = bisect.bisect_right(end_timepoints, start)
+        else:
+            index_lo = bisect.bisect_left(start_timepoints, start)
+        if right_overlap:
+            index_hi = bisect.bisect_left(start_timepoints, end)
+        else:
+            index_hi = bisect.bisect_right(end_timepoints, end)
+        return self._objects[index_lo:index_hi]
+
+    def _get_nearest_objects(self, time, regex=r'.*', boundary='both',
+                             direction='both', exclude_overlapped=False):
+        '''Get the annotation object(s) nearest to time.
+
+        Boundary specifies whether the distance to an annotation object
+        is calculated based on its start time ('start'), end time
+        ('end') or both ('both'). Direction specifies whether it is
+        looked to the left hand side of time ('left'), to the right
+        hand side of time ('right') or to both sides ('both').
+        Annotation objects overlapping with time can be excluded.
+        '''
+        # Filter for specified regular expression
+        matching_objects = self._get_objects_with_regex(regex)
+        # Exclude overlapping intervals from search
+        if exclude_overlapped:
+            overlapping_objects = self._get_objects_by_time(time)
+            for oo in overlapping_objects:
+                if oo in matching_objects:
+                    matching_objects.remove(oo)
+        # Extract start and end boundary times and calculate their
+        # distance to the reference point, this gives a list of tuples
+        # (boundary time, distance, start/end)
+        if boundary in ['start', 'both']:
+            start_boundaries = [(obj.start_time, time - obj.start_time,
+                'start') for obj in matching_objects]
+        if boundary in ['end', 'both']:
+            end_boundaries = [(obj.end_time, time - obj.end_time,
+                'end') for obj in matching_objects]
+        # Depending on search direction and boundary type, compute the
+        # candidate boundary times with minimum distance to the
+        # reference point. Candidates are still tuples
+        candidates = []
+        if direction in ['left', 'both']:
+            if boundary in ['start', 'both']:
+                # Filter for left hand side
+                sl = [x for x in start_boundaries if x[1] >= 0]
+                if len(sl) > 0:
+                    candidates.append(min(sl, key=operator.itemgetter(1)))
+            if boundary in ['end', 'both']:
+                # Filter for left hand side
+                el = [x for x in end_boundaries if x[1] >= 0]
+                if len(el) > 0:
+                    candidates.append(min(el, key=operator.itemgetter(1)))
+        if direction in ['right', 'both']:
+            if boundary in ['start', 'both']:
+                # Filter for right hand side, make distance positive
+                sr = [(x[0], x[1]*-1, x[2]) for x in start_boundaries if x[1] <= 0]
+                if len(sr) > 0:
+                    candidates.append(min(sr, key=operator.itemgetter(1)))
+            if boundary in ['end', 'both']:
+                # Filter for right hand side, make distance positive
+                er = [(x[0], x[1]*-1, x[2]) for x in end_boundaries if x[1] <= 0]
+                if len(er) > 0:
+                    candidates.append(min(er, key=operator.itemgetter(1)))
+        #print('Candidates: ' + str(candidates)) # DEBUG
+        # Compute corresponding annotation objects for all candidates
+        # that have the minimum distance to the reference point and
+        # collect the unique ones
+        if len(candidates) > 0:
+            min_distance = min(candidates, key=operator.itemgetter(1))[1]
+            results = set()
+            for candidate in candidates:
+                if candidate[1] == min_distance:
+                    if candidate[2] == 'start':
+                        results.add(self._get_object_by_start_time(candidate[0]))
+                    elif candidate[2] == 'end':
+                        results.add(self._get_object_by_end_time(candidate[0]))
+            #print('Result: ' + str(results) # DEBUG
+            return list(results)
+        else:
+            return []
+
+    def _get_objects_with_matching_text(self, pattern='', n=0, regex=False):
+        '''Get annotation objects with text matching the pattern.
+
+        If n > 0 the first n matches are returned, if n < 0, the last
+        n matches are returned, if n = 0 all matches are returned. The 
+        pattern is treated as a regular expression, if regex is True.
+        '''
+        if regex:
+            result = [obj for obj in self if re.search(pattern, obj.text)]
+        else:
+            result = [obj for obj in self if obj.text == pattern]
+        if n == 0:
+            return result  # Return all matching intervals
+        elif n > 0:
+            return result[:n]  # Return the first n matching intervals
+        else:  # i.e., n < 0
+            return result[n:]  # Return the last n matching intervals
        
     def __iter__(self):
         return iter(self._objects)
 
     def __len__(self):
-        """Return number of intervals/points in this tier."""
+        '''Return number of annotation objects in this tier.'''
         return len(self._objects)
 
     def __repr__(self):
         return '{0}(start_time={1}, end_time={2}, name="{3}", objects={4})'.format(self.__class__.__name__,
-                                                                          self.start_time,
-                                                                          self.end_time,
-                                                                          self.name,
-                                                                          self._objects)
+            self.start_time, self.end_time, self.name, self._objects)
 
 
 class IntervalTier(Tier):
@@ -178,14 +336,13 @@ class IntervalTier(Tier):
         super(IntervalTier, self).__init__(Time(start_time), Time(end_time),
             name, objects)
 
-    def add_intervals(self, intervals):
-        """Add a list of intervals to this tier."""
-        self._add_objects(intervals, Interval)
-
     def add_interval(self, interval):
-        """Add an interval to this tier. Insert an empty interval if
-        necessary."""
+        '''Add an interval to this tier.'''
         self._add_object(interval, Interval)
+
+    def add_intervals(self, intervals):
+        '''Add a sequence of intervals to this tier.'''
+        self._add_objects(intervals, Interval)
 
     def _get_intervals(self):
         """Get all intervals of this tier."""
@@ -194,157 +351,44 @@ class IntervalTier(Tier):
     intervals = property(fget=_get_intervals,
                 doc='The list of intervals of this tier.')
 
-    def shift_boundaries(self, left, right):
-        """
-        Return a copy of the tier with boundaries shifted by the specified
-        amount of time (in seconds). Positive values expand the tier and negative values shrink
-        it, i.e.:
-        * positive value of left shifts the left boundary to the left
-        * negative value of left shifts the left boundary to the right
-        * positive value of right shifts the right boundary to the right
-        * negative value of right shifts the right boundary to the left.
-        """
-
-        tier_end_shifted = self.end_time + left + right
-        tier_shifted = IntervalTier(start_time=0,
-                                    end_time=tier_end_shifted,
-                                    name=self.name)
-
-        for i, interval in enumerate(self.intervals):
-
-            if interval.end_time <= left * -1:
-                continue
-            elif i > 0 and interval.start_time > left * -1:
-                interval_start_shifted = interval.start_time + left
-            else:
-                interval_start_shifted = 0
-
-            interval_end_shifted = interval.end_time + left
-            if (interval_start_shifted >= tier_end_shifted):
-                break
-            elif i == len(self.intervals) - 1 or interval_end_shifted > tier_end_shifted:
-                interval_end_shifted = tier_end_shifted
-
-            tier_shifted.add_interval(Interval(interval_start_shifted,
-                                               interval_end_shifted,
-                                               interval.text))
-        return tier_shifted
-
-    def get_interval_at_time(self, time):
-        """Get interval at the specified time (or None)."""
-        index = bisect.bisect_right(map(operator.attrgetter('end_time'),
-                                        self._objects), time)
-        if (index != len(self._objects) and time >= self._objects[index].start_time):
-            return self._objects[index]
-        else:
-            return None
-
     def get_interval_by_start_time(self, start_time):
-        """Get interval with the specified left bound (or None)."""
-        index = bisect.bisect_left(map(operator.attrgetter('start_time'),
-                self._objects), start_time)
-        if (index != len(self._objects) and
-                    self._objects[index].start_time == start_time):
-            return self._objects[index]
-        else:
-            return None
+        '''Get the interval that starts at time.'''
+        self._get_object_by_start_time(start_time)
 
     def get_interval_by_end_time(self, end_time):
-        """Get interval with the specified right bound (or None)."""
-        index = bisect.bisect_left(map(operator.attrgetter('end_time'),
-                self._objects), end_time)
-        if (index != len(self._objects)
-                    and self._objects[index].end_time == end_time):
-            return self._objects[index]
-        else:
-            return None
+        '''Get the interval that ends at time.'''
+        self._get_object_by_end_time(end_time)
+
+    def get_intervals_by_time(self, time):
+        """Get intervals at the specified time."""
+        return self._get_objects_by_time(time)
 
     def get_intervals_between_timepoints(self, start, end, left_overlap=False, right_overlap=False):
-        """Get intervals between start and end. If left_overlap or
-        right_overlap is False (the default) intervals overlapping
-        with start or end are excluded."""
-        get_end_time = operator.attrgetter('end_time')
-        get_start_time = operator.attrgetter('start_time')
-        if left_overlap:
-            index_lo = bisect.bisect_right(map(get_end_time,
-                                               self._objects), start)
-        else:
-            index_lo = bisect.bisect_left(map(get_start_time,
-                                              self._objects), start)
+        '''Get intervals between start and end.
 
-        if right_overlap:
-            index_hi = bisect.bisect_left(map(get_start_time,
-                                              self._objects), end)
-        else:
-            index_hi = bisect.bisect_right(map(get_end_time,
-                                               self._objects), end)
-        return self._objects[index_lo:index_hi]
+        If left_overlap or right_overlap is False intervals overlapping
+        with start or end are excluded.
+        '''
+        return self._get_objects_between_timepoints(start, end, left_overlap, right_overlap)
 
-    def get_nearest_interval(self, time, direction='both', interval_label=r'[^\s]+', exclude_overlapped=False):
-        """Get the nearest interval boundary in self in the specified
-        direction matching interval_label. Returns a tuple of both boundaries
-        if they are equally far from time and direction is 'both'.
-        If exclude_overlapped is True, the interval time falls into is skipped.
-        """
-
-        index_left = index_right = bisect.bisect_right(map(operator.attrgetter('end_time'),
-                                                          self._objects), time)
-
-        if direction in ['left', 'both']:
-            if exclude_overlapped:
-                index_left -= 1
-            while index_left >= 0 and not re.search(interval_label, self._objects[index_left].text):
-                index_left -= 1
-
-            if direction == 'left':
-                return self._objects[index_left] if index_left >= 0 else None
-        if exclude_overlapped:
-            index_right += 1
-        while index_right < len(self._objects) and not re.search(interval_label, self._objects[index_right].text):
-            index_right += 1
-
-        if direction == 'right':
-            return self._objects[index_right] if index_right < len(self._objects) else None
-
-        else:
-            distance_left = time - self._objects[index_left].end_time
-            distance_right = self._objects[index_right].start_time - time
-            if distance_left < distance_right:
-                return self._objects[index_left]
-            elif distance_left > distance_right:
-                return self._objects[index_right]
-            else:
-                return self._objects[index_left], self._objects[index_right]
+    def get_nearest_interval(self, time, direction='both', regex=r'[^\s]+', exclude_overlapped=False):
+        pass
 
     def get_intervals_with_regex(self, regex=r'[^\s]+', n=0):
-        """Get intervals with text matching the specified
-        regular expression ([^\s]+ by default). If n > 0
-        the first n matches are returned, if n < 0, the last n
-        matches are returned, if n = 0 (the default) all matches are returned.
-        """
+        '''Get intervals with text matching the regex pattern.
 
-        result = [x for x in self.intervals if re.search(regex, x.text)]
-        if n == 0:
-            return result  # Return all matching intervals
-        elif n > 0:
-            return result[:n]  # Return the first n matching intervals
-        else:  # i.e., n < 0
-            return result[n:]  # Return the last n matching intervals
+        If n > 0 the first n matches are returned, if n < 0, the last
+        n matches are returned, if n = 0 all matches are returned.
+        '''
+        return self._get_objects_with_matching_text(regex, n, regex=True)
 
     def get_intervals_with_text(self, text, n=0):
-        """Get intervals with the specified text. If n > 0
-        the first n matches are returned, if n < 0, the last n
-        matches are returned, if n = 0 (the default)
-        all matches are returned.
-        """
+        '''Get intervals with text matching the pattern.
 
-        result = [x for x in self.intervals if x.text == text]
-        if n == 0:
-            return result  # Return all matching intervals
-        elif n > 0:
-            return result[:n]  # Return the first n matching intervals
-        else:  # i.e., n < 0
-            return result[n:]  # Return the last n matching intervals
+        If n > 0 the first n matches are returned, if n < 0, the last
+        n matches are returned, if n = 0 all matches are returned.
+        '''
+        return self._get_objects_with_text(text, n, regex=False)
 
 
 class PointTier(Tier):
@@ -370,42 +414,33 @@ class PointTier(Tier):
                 doc='The list of points of this tier.')
 
     def get_point_at_time(self, time):
-        """Get point at specified point of time."""
-        index = bisect.bisect_left(map(lambda x: x.time, self._objects), time)
-        if index != len(self._objects) and self._objects[index].time == time:
-            return self._objects[index]
-        else:
-            return None
+        '''Get the point at time.'''
+        return self._get_object_by_start_time(time)
 
     def get_points_between_timepoints(self, start, end, left_inclusive=False, right_inclusive=False):
-        """Get intervals between start and end. If left_inclusive or
-        right_inclusive is False (the default) points coinciding
-        with start or end are excluded."""
-        get_time = operator.attrgetter('time')
-        if left_inclusive:
-            index_lo = bisect.bisect_left(map(get_time, self._objects), start)
-        else:
-            index_lo = bisect.bisect_right(map(get_time, self._objects), start)
-        if right_inclusive:
-            index_hi = bisect.bisect_right(map(get_time, self._objects), end)
-        else:
-            index_hi = bisect.bisect_left(map(get_time, self._objects), end)
-        return self._objects[index_lo:index_hi]
+        '''Get points between start and end.
+
+        If left_overlap or right_overlap is False points overlapping
+        with start or end are excluded.
+        '''
+        return self._get_objects_between_timepoints(start, end, 
+            left_inclusive, right_inclusive)
+
+    def get_points_with_regex(self, regex=r'[^\s]+', n=0):
+        '''Get points with text matching the regex pattern.
+
+        If n > 0 the first n matches are returned, if n < 0, the last
+        n matches are returned, if n = 0 all matches are returned.
+        '''
+        return self._get_objects_with_matching_text(regex, n, regex=True)
 
     def get_points_with_text(self, text, n=0):
-        """Get points with the specified text. If n > 0
-        the first n matches are returned, if n < 0, the last n
-        matches are returned, if n = 0 (the default) all
-        matches are returned.
-        """
+        '''Get points with text matching the pattern.
 
-        result = [x for x in self.points if x.text == text]
-        if n == 0:
-            return result  # Return all matching points
-        elif n > 0:
-            return result[:n]  # Return the first n matching points
-        else:  # i.e., n < 0
-            return result[n:]  # Return the last n matching points
+        If n > 0 the first n matches are returned, if n < 0, the last
+        n matches are returned, if n = 0 all matches are returned.
+        '''
+        return self._get_objects_with_text(text, n, regex=False)
 
 
 class AnnotationObject(object):
@@ -824,6 +859,42 @@ def write_to_file(textgrid, filename, format='short', encoding='utf-8', **kwargs
 
 ##  High-level functions
 ##----------------------------------------------------------------------------
+
+def shift_boundaries(tier, left, right):
+    """
+    Return a copy of the tier with boundaries shifted by the specified
+    amount of time (in seconds). Positive values expand the tier and negative values shrink
+    it, i.e.:
+    * positive value of left shifts the left boundary to the left
+    * negative value of left shifts the left boundary to the right
+    * positive value of right shifts the right boundary to the right
+    * negative value of right shifts the right boundary to the left.
+    """
+
+    tier_end_shifted = tier.end_time + left + right
+    tier_shifted = IntervalTier(start_time=0,
+                                end_time=tier_end_shifted,
+                                name=tier.name)
+
+    for i, interval in enumerate(tier.intervals):
+
+        if interval.end_time <= left * -1:
+            continue
+        elif i > 0 and interval.start_time > left * -1:
+            interval_start_shifted = interval.start_time + left
+        else:
+            interval_start_shifted = 0
+
+        interval_end_shifted = interval.end_time + left
+        if (interval_start_shifted >= tier_end_shifted):
+            break
+        elif i == len(tier.intervals) - 1 or interval_end_shifted > tier_end_shifted:
+            interval_end_shifted = tier_end_shifted
+
+        tier_shifted.add_interval(Interval(interval_start_shifted,
+                                           interval_end_shifted,
+                                           interval.text))
+    return tier_shifted
 
 def get_overlapping_intervals(tier1, tier2, regex=r'[^\s]+', overlap_label='overlap'):
     """Return a list of overlaps between intervals of tier1 and
