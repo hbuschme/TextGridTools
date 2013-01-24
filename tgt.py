@@ -446,7 +446,8 @@ class PointTier(Tier):
 class AnnotationObject(object):
 
     def __init__(self, start_time, end_time, text=''):
-        super(Interval, self).__init__()
+        '''Initialise the AnnotationObject.'''
+        super(AnnotationObject, self).__init__()
         if start_time > end_time:
             raise ValueError('Start time after end time.')
         self._start_time = Time(start_time)
@@ -491,9 +492,10 @@ class AnnotationObject(object):
 
 
 class Interval(AnnotationObject):
-    '''An interval of two points of time with an attached text label.'''
+    '''An interval of two points of time with a text label.'''
 
     def __init__(self, start_time, end_time, text=''):
+        '''Initialise this Interval.'''
         super(Interval, self).__init__(start_time, end_time, text)
 
     def __repr__(self):
@@ -501,12 +503,13 @@ class Interval(AnnotationObject):
 
 
 class Point(AnnotationObject):
-    '''A point of time with an attached text label.
+    '''A point of time with a text label.
 
     Internally an AnnotationObject where start time equals end time.
     '''
 
     def __init__(self, time, text=''):
+        '''Initialise this Point.'''
         super(Point, self).__init__(time, time, text)
 
     def _get_time(self):
