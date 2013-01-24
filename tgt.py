@@ -46,58 +46,68 @@ class TextGrid(object):
         self._tiers = []
         self.filename = filename
 
-    def add_tiers(self, tiers):
-        """Add a list of tiers."""
-        for tier in tiers:
-            self.add_tier(tier)
+    tiers = property(fget=lambda self: self._tiers,
+                     doc='Tiers in this TextGrid object.')
 
     def add_tier(self, tier):
         """Add a tier."""
         self._tiers.append(tier)
 
-    tiers = property(fget=lambda self: self._tiers,
-                     doc='Tiers in this TextGrid object.')
-
-    def del_tiers(self, tier_names, complement=False):
-        """If complement is False (the default), delete tiers with the specified names.
-        If complement is True, delete tiers with names other than those specified."""
-        if not complement:
-            self._tiers = [tier for tier in self._tiers if tier.name not in tier_names]
-        else:
-            self._tiers = [tier for tier in self._tiers if tier.name in tier_names]
+    def add_tiers(self, tiers):
+        """Add a list of tiers."""
+        for tier in tiers:
+            self.add_tier(tier)
 
     def insert_tier(self, tier, position):
         """Insert a tier at the specified position."""
         self._tiers.insert(position, tier)
 
+    def delete_tier(self, tier_name):
+        '''Delete a tier.'''
+        tier = self.get_tier_by_name(tier_name)
+        self.tiers.remove(tier)
+
+    def delete_tiers(self, tier_names, complement=False):
+        '''Delete a list of tiers.
+
+        If complement is False, delete tiers with the specified names.
+        If complement is True, delete tiers not specified.
+        '''
+        if not complement:
+            self._tiers = [tier for tier in self._tiers 
+                if tier.name not in tier_names]
+        else:
+            self._tiers = [tier for tier in self._tiers
+                if tier.name in tier_names]
+
     def get_tier_names(self):
-        """Get names of all tiers."""
+        '''Get names of all tiers.'''
         return [tier.name for tier in self._tiers]
 
     def has_tier(self, name):
-        """Check whether TextGrid has a tier of the specified name."""
+        '''Check whether TextGrid has a tier of the specified name.'''
         return name in self.get_tier_names()
 
     def get_tier_by_name(self, name):
-        """Get tier of specified name."""
+        '''Get tier of specified name.'''
         for tier in self._tiers:
             if tier.name == name:
                 return tier
         raise ValueError('Textgrid ' + self.filename +
                     ' does not have a tier called "' + name + '".')
 
-    def _earliest_start_time(self):
+    def _get_earliest_start_time(self):
         '''Return the earliest start time among all tiers.'''
         return min([tier.start_time for tier in self])
 
-    start_time = property(fget=_earliest_start_time,
+    start_time = property(fget=_get_earliest_start_time,
                           doc='TextGrid start time.')
 
-    def _latest_end_time(self):
+    def _get_latest_end_time(self):
         '''Return the latest end time among all tiers.'''
         return max([tier.end_time for tier in self])
 
-    end_time = property(fget=_latest_end_time,
+    end_time = property(fget=_get_latest_end_time,
                         doc='TextGrid end time.')
 
     def __contains__(self, name):
