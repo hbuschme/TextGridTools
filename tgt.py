@@ -239,7 +239,7 @@ class Tier(object):
         Annotation objects overlapping with time can be excluded.
         '''
         # Filter for specified regular expression
-        matching_objects = self._get_objects_with_regex(regex)
+        matching_objects = self._get_objects_with_matching_text(pattern=regex, regex=True)
         # Exclude overlapping intervals from search
         if exclude_overlapped:
             overlapping_objects = self._get_objects_by_time(time)
