@@ -603,6 +603,47 @@ class TestTier(unittest.TestCase):
         r = t._get_nearest_objects(6.0, boundary='both', direction='both')
         self.assertTrue(r == set([ao4]))
 
+    def test_get_copy_with_gaps_filled(self):
+        i1 = tgt.Interval(0,2, 'i1')
+        i2 = tgt.Interval(2,3, 'i2')
+        i3 = tgt.Interval(4,5, 'i3')
+        i4 = tgt.Interval(7,8, 'i4')
+        i5 = tgt.Interval(8.5,9.5, 'i5')
+
+        # - insert empty start interval
+        t1 = tgt.IntervalTier(0, 3, 't1')
+        t1.add_intervals([i2])
+        t1_c = t1.get_copy_with_gaps_filled()
+        self.assertTrue(len(t1) == 1)
+        self.assertTrue(len(t1_c) == 2)
+
+        # - insert emtpy end interval
+        t2 = tgt.IntervalTier(0, 3, 't2')
+        t2.add_intervals([i1])
+        t2_c = t2.get_copy_with_gaps_filled()
+        self.assertTrue(len(t2) == 1)
+        self.assertTrue(len(t2_c) == 2)
+
+        # - insert all over the place
+        t3 = tgt.IntervalTier(0, 10, 't3')
+        t3.add_intervals([i2, i3, i4, i5])
+        t3_c = t3.get_copy_with_gaps_filled()
+        self.assertTrue(len(t3) == 4)
+        self.assertTrue(len(t3_c) == 9)
+
+        # - insert into emtpy tier
+        t4 = tgt.IntervalTier(0, 5, 't4')
+        t4_c = t4.get_copy_with_gaps_filled()
+        self.assertTrue(len(t4) == 0)
+        self.assertTrue(len(t4_c) == 1)
+
+        # - do nothing
+        t5 = tgt.IntervalTier(0, 3, 't5')
+        t5.add_intervals([i1, i2])
+        t5_c = t5.get_copy_with_gaps_filled()
+        self.assertTrue(len(t5) == 2)
+        self.assertTrue(len(t5_c) == 2)
+
 
 class TestInterval(unittest.TestCase):
 

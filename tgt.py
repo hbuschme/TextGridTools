@@ -34,6 +34,7 @@ __all__ = [
     'read_textgrid', #'read_short_textgrid', 'read_long_textgrid',
     'export_to_short_textgrid', 'export_to_long_textgrid', 'export_to_elan',
     'export_to_table', 'write_to_file',
+    'correct_start_end_times_and_fill_gaps',
     'get_overlapping_intervals', 'merge_textgrids', 'concatenate_textgrids'
 ]
 
@@ -173,7 +174,7 @@ class Tier(object):
             else:
                 raise ValueError(
                     'Could not add object {0} to this tier: Overlap.'.format(
-                        repr(object)))
+                        repr(obj)))
 
     def _add_objects(self, objects):
         """Add a sequence of annotation objects."""
@@ -339,11 +340,11 @@ class IntervalTier(Tier):
 
     def add_interval(self, interval):
         '''Add an interval to this tier.'''
-        self._add_object(interval, Interval)
+        self._add_object(interval)
 
     def add_intervals(self, intervals):
         '''Add a sequence of intervals to this tier.'''
-        self._add_objects(intervals, Interval)
+        self._add_objects(intervals)
 
     def _get_intervals(self):
         """Get all intervals of this tier."""
@@ -391,6 +392,33 @@ class IntervalTier(Tier):
         '''
         return self._get_objects_with_text(text, n, regex=False)
 
+    def get_copy_with_gaps_filled(self, start_time=None, end_time=None):
+        '''Returns a copy where gaps are filled with empty intervals.'''
+        tier_copy = copy.deepcopy(self)
+        if start_time is not None:
+            tier_copy._specd_start_time = Time(start_time)
+        if end_time is not None:
+            tier_copy._specd_end_time = Time(end_time)
+        # If no intervals exist, add one interval from start to end
+        if len(self) == 0:
+            empty = Interval(self.start_time, self.end_time, '')
+            tier_copy.add_interval(empty)
+        else:
+            # If necessary, add empty interval at start of tier
+            if self._objects[0].start_time > self.start_time:
+                empty = Interval(self.start_time, self._objects[0].start_time, '')
+                tier_copy.add_interval(empty)
+            # If necessary, add empty interval at end of tier
+            if self._objects[-1].end_time < self.end_time:
+                empty = Interval(self._objects[-1].end_time, self.end_time, '')
+                tier_copy.add_interval(empty)
+            # Insert empty intervals in between non-meeting intervals
+            for i in range(len(self) - 1):
+                if self._objects[i].end_time < self._objects[i+1].start_time:
+                    empty = Interval(self._objects[i].end_time, self._objects[i+1].start_time, '')
+                    tier_copy.add_interval(empty)
+        return tier_copy
+
 
 class PointTier(Tier):
     '''A PointTier (also "TextTier").'''
@@ -401,11 +429,11 @@ class PointTier(Tier):
 
     def add_points(self, points):
         """Adds a list of points to this tier."""
-        self._add_objects(points, Point)
+        self._add_objects(points)
 
     def add_point(self, point):
         """Add a point to this tier."""
-        self._add_object(point, Point)
+        self._add_object(point)
 
     def _get_points(self):
         """Get all points of this tier."""
@@ -449,10 +477,10 @@ class AnnotationObject(object):
     def __init__(self, start_time, end_time, text=''):
         '''Initialise the AnnotationObject.'''
         super(AnnotationObject, self).__init__()
-        if start_time > end_time:
-            raise ValueError('Start time after end time.')
         self._start_time = Time(start_time)
         self._end_time = Time(end_time)
+        if start_time > end_time:
+            raise ValueError('Start time {0} after end time {1}.'.format(start_time, end_time))
         self.text = text.strip()
 
     def _get_start_time(self):
@@ -460,7 +488,7 @@ class AnnotationObject(object):
 
     def _set_start_time(self, start_time):
         if start_time > self.end_time:
-            raise ValueError('Start time after end time.')
+            raise ValueError('Start time {0} after end time {1}.'.format(start_time, self.end_time))
         self._start_time = Time(start_time)
 
     start_time = property(fget=_get_start_time, fset=_set_start_time,
@@ -471,7 +499,7 @@ class AnnotationObject(object):
 
     def _set_end_time(self, end_time):
         if end_time < self.start_time:
-            raise ValueError('End time before start time.')
+            raise ValueError('Start time {0} after end time {1}.'.format(self.start_time, end_time))
         self._end_time = Time(end_time)
 
     end_time = property(fget=_get_end_time, fset=_set_end_time,
@@ -555,26 +583,25 @@ class Time(float):
 ##  Functions for reading TextGrid files
 ##----------------------------------------------------------------------------
 
-
-def read_textgrid(filename, encoding='utf-8'):
+def read_textgrid(filename, encoding='utf-8', include_empty_intervals=False):
     '''Read a Praat TextGrid file and returns a TextGrid object.'''
     with codecs.open(filename, 'r', encoding) as f:
         # Read whole file into memory ignoring empty lines and lines consisting
-        # solely of a single pair of double quotes.
-        stg = filter(lambda s: s not in ['', '"'],
-                     map(lambda s: s.strip(), f.readlines()))
+        # solely of a single double quotes.
+        stg = [line.strip() for line in f.readlines()
+            if line.strip() not in ['', '"']]
     if stg[0] != 'File type = "ooTextFile"':
         raise Exception(filename)
     if stg[1] != 'Object class = "TextGrid"':
         raise Exception(filename)
     # Determine the TextGrid format.
     if stg[2].startswith('xmin'):
-        return read_long_textgrid(filename, stg)
+        return read_long_textgrid(filename, stg, include_empty_intervals)
     else:
-        return read_short_textgrid(filename, stg)
+        return read_short_textgrid(filename, stg, include_empty_intervals)
 
 
-def read_short_textgrid(filename, stg):
+def read_short_textgrid(filename, stg, include_empty_intervals=False):
     '''Read a Praat short TextGrid file and return a TextGrid object.'''
 
     def read_interval_tier(stg_extract):
@@ -585,10 +612,13 @@ def read_short_textgrid(filename, stg):
         it = IntervalTier(start_time, end_time, name)
         i = 5
         while i < len(stg_extract):
-            it.add_interval(Interval(Time(stg_extract[i]),  # left bound
-                Time(stg_extract[i + 1]),                     # right bound
-                stg_extract[i + 2].strip('"')))               # text w/o quotes
-            i += 3
+            text = stg_extract[i + 2].strip('"') # text w/o quotes
+            if include_empty_intervals or text.strip() != '':
+                it.add_interval(
+                    Interval(Time(stg_extract[i]), # left bound
+                    Time(stg_extract[i + 1]), # right bound
+                    text))
+            i += 3               
         return it
 
     def read_point_tier(stg_extract):
@@ -599,8 +629,10 @@ def read_short_textgrid(filename, stg):
         pt = PointTier(start_time, end_time, name)
         i = 5
         while i < len(stg_extract):
-            pt.add_point(Point(stg_extract[i],  # time
-                stg_extract[i + 1].strip('"')))   # text w/o quotes
+            text = stg_extract[i + 1].strip('"') # text w/o quotes
+            pt.add_point(Point(
+                stg_extract[i], # time
+                text))   
             i += 2
         return pt
 
@@ -624,7 +656,7 @@ def read_short_textgrid(filename, stg):
     return tg
 
 
-def read_long_textgrid(filename, stg):
+def read_long_textgrid(filename, stg, include_empty_intervals=False):
     '''Read a Praat long TextGrid file and return a TextGrid object.'''
 
     def get_attr_val(x):
@@ -639,9 +671,12 @@ def read_long_textgrid(filename, stg):
         it = IntervalTier(start_time, end_time, name)
         i = 7
         while i < len(stg_extract):
-            it.add_interval(Interval(get_attr_val(stg_extract[i]),  # left bound
-                get_attr_val(stg_extract[i + 1]),                     # right bound
-                get_attr_val(stg_extract[i + 2])[1:-1]))              # text w/o quotes
+            text = get_attr_val(stg_extract[i + 2])[1:-1] # text w/o quotes
+            if include_empty_intervals or text.strip() != '':
+                it.add_interval(Interval(
+                    get_attr_val(stg_extract[i]), # left bound
+                    get_attr_val(stg_extract[i + 1]), # right bound
+                    text))
             i += 4
         return it
 
@@ -653,8 +688,10 @@ def read_long_textgrid(filename, stg):
         pt = PointTier(start_time, end_time, name)
         i = 7
         while i < len(stg_extract):
-            pt.add_point(Point(get_attr_val(stg_extract[i]),  # time
-                get_attr_val(stg_extract[i + 1])[1:-1]))      # text w/o quotes
+            text = get_attr_val(stg_extract[i + 1])[1:-1] # text w/o quotes
+            pt.add_point(Point(
+                get_attr_val(stg_extract[i]), # time
+                text))
             i += 3
         return pt
 
@@ -681,33 +718,31 @@ def read_long_textgrid(filename, stg):
 ##  Functions for writing TextGrid files
 ##----------------------------------------------------------------------------
 
-def correct_end_times(textgrid):
-    """Correct the end times of all Tiers of a Textgrid object.
+def correct_start_end_times_and_fill_gaps(textgrid):
+    '''Correct the start/end times of all tiers and fill gaps.
 
-    Modifies the end times of all tiers to textgrid.end_time and (for
-    IntervalTiers) adds the final empty intervals if necessary.
-    """
+    Returns a copy of a textgrid, where empty gaps between intervals
+    are filled with empty intervals and where start and end times are
+    unified with the start and end times of the whole textgrid.
+    '''
     textgrid_copy = copy.deepcopy(textgrid)
     for tier in textgrid_copy:
-        if isinstance(tier, IntervalTier) and tier.end_time < textgrid_copy.end_time:
-            # For interval tiers insert the final empty interval
-            # if necessary.
-            empty_interval = Interval(tier.end_time, textgrid_copy.end_time, '')
-            tier._add_object(empty_interval, Interval)
-        tier.end_time = textgrid_copy.end_time
+        if isinstance(tier, IntervalTier):
+            tier_corrected = tier.get_copy_with_gaps_filled(textgrid.start_time, textgrid.end_time)
+            position = textgrid_copy.tiers.index(tier)
+            textgrid_copy.tiers[position] = tier_corrected
     return textgrid_copy
-
 
 def export_to_short_textgrid(textgrid):
     '''Convert a TextGrid object into a string of Praat short TextGrid format.'''
     result = ['File type = "ooTextFile"',
-               'Object class = "TextGrid"',
-               '',
-               textgrid.start_time,
-               textgrid.end_time,
-               '<exists>',
-               len(textgrid)]
-    textgrid_corrected = correct_end_times(textgrid)
+              'Object class = "TextGrid"',
+              '',
+              textgrid.start_time,
+              textgrid.end_time,
+              '<exists>',
+              len(textgrid)]
+    textgrid_corrected = correct_start_end_times_and_fill_gaps(textgrid)
     for tier in textgrid_corrected:
         result += ['"' + tier.__class__.__name__ + '"',
                    '"' + tier.name + '"',
@@ -757,7 +792,7 @@ def export_to_long_textgrid(textgrid):
     return '\n'.join([unicode(x) for x in result])
 
 
-def export_to_elan(textgrid, encoding='utf-8', include_empty_annotations=False,
+def export_to_elan(textgrid, encoding='utf-8', include_empty_intervals=False,
                    include_point_tiers=True, point_tier_annotation_duration=0.04):
     """Convert a TextGrid object into a string of ELAN eaf format."""
 
@@ -785,7 +820,7 @@ def export_to_elan(textgrid, encoding='utf-8', include_empty_annotations=False,
         annotations.append(u'<TIER DEFAULT_LOCALE="en" LINGUISTIC_TYPE_REF="default-lt" TIER_ID="{0}">'.format(tier.name))
         if isinstance(tier, IntervalTier):
             for interval in tier.intervals:
-                if not include_empty_annotations and interval.text == '':
+                if not include_empty_intervals and interval.text == '':
                     continue
                 annotations += [
                     u'<ANNOTATION>',
@@ -900,12 +935,12 @@ def shift_boundaries(tier, left, right):
                                            interval.text))
     return tier_shifted
 
-def get_overlapping_intervals(tier1, tier2, regex=r'[^\s]+', overlap_label='overlap'):
-    """Return a list of overlaps between intervals of tier1 and
-    tier2 matching the regular expression. All nonempty intervals
-    are included in the search by default.
 
-    """
+def get_overlapping_intervals(tier1, tier2, regex=r'[^\s]+', overlap_label='overlap'):
+    '''Return a list of overlaps between intervals of tier1 and tier2.
+    
+    All nonempty intervals are included in the search by default.
+    '''
     if not isinstance(tier2, IntervalTier):
         raise TypeError('Argument is not an IntervalTier')
     intervals1 = tier1.intervals
@@ -960,21 +995,21 @@ def concatenate_textgrids(textgrids, ignore_nonmatching_tiers=False):
                     intervals.append(interval)
                 tiers[tier.name].add_intervals(intervals)
         tot_duration += textgrid.end_time
-
     # Create a new TextGrid and add the concatenated tiers
     textgrid_concatenated = TextGrid()
     # Add tiers in the order they're found in the first TextGrid.
-    textgrid_concatenated.add_tiers([tiers[x] for x in tier_names_intersection])
     textgrid_concatenated.add_tiers(
         [tiers[x] for x in tier_names_intersection])
     return textgrid_concatenated
 
 
 def merge_textgrids(textgrids, ignore_duplicates=True):
-    """Return a TextGrid object with tiers in all textgrids. If ignore_duplicates
-    is False, tiers with equal names are renamed by adding a path of the textgrid or
-    a unique number incremented with each occurrence."""
+    '''Return a TextGrid object with tiers in all textgrids.
 
+    If ignore_duplicates is False, tiers with equal names are renamed
+    by adding a path of the textgrid or a unique number incremented
+    with each occurrence.
+    '''
     tg_merged = TextGrid()
     tier_duplicates_lookup = collections.defaultdict(int)
     for tg in textgrids:
