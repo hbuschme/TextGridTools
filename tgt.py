@@ -237,6 +237,9 @@ class Tier(object):
         looked to the left hand side of time ('left'), to the right
         hand side of time ('right') or to both sides ('both').
         Annotation objects overlapping with time can be excluded.
+
+        Note: When time lies exactly on a boundary, this boundary is
+        both to the left and to the right of time.
         '''
         # Filter for specified regular expression
         matching_objects = self._get_objects_with_matching_text(pattern=regex, regex=True)
@@ -294,10 +297,10 @@ class Tier(object):
                         results.add(self._get_object_by_start_time(candidate[0]))
                     elif candidate[2] == 'end':
                         results.add(self._get_object_by_end_time(candidate[0]))
-            #print('Result: ' + str(results) # DEBUG
-            return list(results)
+            print('Result: ' + str(results)) # DEBUG
+            return results
         else:
-            return []
+            return set()
 
     def _get_objects_with_matching_text(self, pattern='', n=0, regex=False):
         '''Get annotation objects with text matching the pattern.
