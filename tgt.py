@@ -284,7 +284,6 @@ class Tier(object):
                 er = [(x[0], x[1]*-1, x[2]) for x in end_boundaries if x[1] <= 0]
                 if len(er) > 0:
                     candidates.append(min(er, key=operator.itemgetter(1)))
-        #print('Candidates: ' + str(candidates)) # DEBUG
         # Compute corresponding annotation objects for all candidates
         # that have the minimum distance to the reference point and
         # collect the unique ones
@@ -297,7 +296,6 @@ class Tier(object):
                         results.add(self._get_object_by_start_time(candidate[0]))
                     elif candidate[2] == 'end':
                         results.add(self._get_object_by_end_time(candidate[0]))
-            print('Result: ' + str(results)) # DEBUG
             return results
         else:
             return set()
@@ -722,7 +720,7 @@ def export_to_short_textgrid(textgrid):
                        for obj in tier]
         else:
             Exception('Unknown tier type: {0}'.format(tier.name))
-    return '\n'.join(map(unicode, result))
+    return '\n'.join([unicode(x) for x in result])
 
 
 def export_to_long_textgrid(textgrid):
@@ -756,7 +754,7 @@ def export_to_long_textgrid(textgrid):
                            '\t\t\tmark = "' + obj.text + '"']
         else:
             Exception('Unknown tier type: {0}'.format(tier.name))
-    return '\n'.join(map(unicode, result))
+    return '\n'.join([unicode(x) for x in result])
 
 
 def export_to_elan(textgrid, encoding='utf-8', include_empty_annotations=False,
@@ -819,7 +817,7 @@ def export_to_elan(textgrid, encoding='utf-8', include_empty_annotations=False,
             u'<LOCALE COUNTRY_CODE="US" LANGUAGE_CODE="en"/>',
             u'</ANNOTATION_DOCUMENT>']
     eaf = head + time_info + annotations + foot
-    return '\n'.join(map(unicode, eaf))
+    return '\n'.join([unicode(x) for x in eaf])
 
 
 def export_to_table(textgrid, separator=','):
@@ -839,7 +837,7 @@ def export_to_table(textgrid, separator=','):
                                               unicode(obj.time), unicode(obj.time), obj.text]))
         else:
             Exception('Unknown tier type: {0}'.format(tier.name))
-    return '\n'.join(map(unicode, result))
+    return '\n'.join([unicode(x) for x in result])
 
 # Listing of currently supported export formats.
 _EXPORT_FORMATS = {
@@ -928,30 +926,27 @@ def get_overlapping_intervals(tier1, tier2, regex=r'[^\s]+', overlap_label='over
 
 
 def concatenate_textgrids(textgrids, ignore_nonmatching_tiers=False):
-    """Concatenate Tiers with matching names. TextGrids are concatenated
-    in the order they are specified. If ignore_nonmatching_tiers is False
-    (the default), an exception is raised if the number and the names of
-     tiers differ between TextGrids."""
+    '''Concatenate Tiers with matching names.
 
-    tier_names_intersection = reduce(lambda x, y: x.intersection(y),
-                                     map(lambda x: set(x.get_tier_names()),
-                                         textgrids))
+    TextGrids are concatenated in the order they are specified. If 
+    ignore_nonmatching_tiers is False, an exception is raised if the
+    number and the names of tiers differ between TextGrids.
+    '''
+    tier_names_intersection = set.intersection(
+        *[set(tg.get_tier_names()) for tg in textgrids])
     # Check whether the TextGrids have the same number of tiers
     # and whether tier names match. If they don't
     # and if ignore_nonmatching_tiers is False, raise an exception.
     if (not ignore_nonmatching_tiers
         and not all([len(tier_names_intersection) == len(tg) for tg in textgrids])):
         raise Exception('TextGrids have different numbers of tiers or tier names do not match.')
-
     tot_duration = 0
     tiers = {}  # tier_name : tgt.Tier()
-
     for textgrid in textgrids:
         for tier in textgrid:
             if tier.name not in tier_names_intersection:
                 continue
             intervals = []
-
             # If this is the first we see this tier, we just make a copy
             # of it as it is.
             if tier.name not in tiers.keys():
@@ -970,6 +965,8 @@ def concatenate_textgrids(textgrids, ignore_nonmatching_tiers=False):
     textgrid_concatenated = TextGrid()
     # Add tiers in the order they're found in the first TextGrid.
     textgrid_concatenated.add_tiers([tiers[x] for x in tier_names_intersection])
+    textgrid_concatenated.add_tiers(
+        [tiers[x] for x in tier_names_intersection])
     return textgrid_concatenated
 
 
