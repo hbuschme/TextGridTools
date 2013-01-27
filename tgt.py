@@ -816,11 +816,12 @@ def export_to_elan(textgrid, encoding='utf-8', include_empty_intervals=False,
     # Create annotations
     annotation_id_count = 1
     annotations = []
-    for tier in textgrid:
+    textgrid_copy = correct_start_end_times_and_fill_gaps(textgrid) if include_empty_intervals else textgrid
+    for tier in textgrid_copy:
         annotations.append(u'<TIER DEFAULT_LOCALE="en" LINGUISTIC_TYPE_REF="default-lt" TIER_ID="{0}">'.format(tier.name))
         if isinstance(tier, IntervalTier):
-            for interval in tier.intervals:
-                if not include_empty_intervals and interval.text == '':
+            for interval in tier:
+                if include_empty_intervals or interval.text != '':
                     continue
                 annotations += [
                     u'<ANNOTATION>',
