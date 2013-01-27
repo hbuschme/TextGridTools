@@ -614,8 +614,8 @@ def read_short_textgrid(filename, stg, include_empty_intervals=False):
         while i < len(stg_extract):
             text = stg_extract[i + 2].strip('"') # text w/o quotes
             if include_empty_intervals or text.strip() != '':
-                it.add_interval(
-                    Interval(Time(stg_extract[i]), # left bound
+                it.add_interval(Interval(
+                    Time(stg_extract[i]), # left bound
                     Time(stg_extract[i + 1]), # right bound
                     text))
             i += 3               
@@ -674,8 +674,8 @@ def read_long_textgrid(filename, stg, include_empty_intervals=False):
             text = get_attr_val(stg_extract[i + 2])[1:-1] # text w/o quotes
             if include_empty_intervals or text.strip() != '':
                 it.add_interval(Interval(
-                    get_attr_val(stg_extract[i]), # left bound
-                    get_attr_val(stg_extract[i + 1]), # right bound
+                    Time(get_attr_val(stg_extract[i])), # left bound
+                    Time(get_attr_val(stg_extract[i + 1])), # right bound
                     text))
             i += 4
         return it
@@ -690,7 +690,7 @@ def read_long_textgrid(filename, stg, include_empty_intervals=False):
         while i < len(stg_extract):
             text = get_attr_val(stg_extract[i + 1])[1:-1] # text w/o quotes
             pt.add_point(Point(
-                get_attr_val(stg_extract[i]), # time
+                Time(get_attr_val(stg_extract[i])), # time
                 text))
             i += 3
         return pt
