@@ -392,7 +392,7 @@ class IntervalTier(Tier):
         '''
         return self._get_objects_with_text(text, n, regex=False)
 
-    def get_copy_with_gaps_filled(self, start_time=None, end_time=None):
+    def get_copy_with_gaps_filled(self, start_time=None, end_time=None, empty_string=''):
         '''Returns a copy where gaps are filled with empty intervals.'''
         tier_copy = copy.deepcopy(self)
         if start_time is not None:
@@ -401,21 +401,21 @@ class IntervalTier(Tier):
             tier_copy._specd_end_time = Time(end_time)
         # If no intervals exist, add one interval from start to end
         if len(self) == 0:
-            empty = Interval(self.start_time, self.end_time, '')
+            empty = Interval(self.start_time, self.end_time, empty_string)
             tier_copy.add_interval(empty)
         else:
             # If necessary, add empty interval at start of tier
-            if self._objects[0].start_time > self.start_time:
-                empty = Interval(self.start_time, self._objects[0].start_time, '')
+            if self.intervals[0].start_time > self.start_time:
+                empty = Interval(self.start_time, self.intervals[0].start_time, empty_string)
                 tier_copy.add_interval(empty)
             # If necessary, add empty interval at end of tier
-            if self._objects[-1].end_time < self.end_time:
-                empty = Interval(self._objects[-1].end_time, self.end_time, '')
+            if self.intervals[-1].end_time < self.end_time:
+                empty = Interval(self.intervals[-1].end_time, self.end_time, empty_string)
                 tier_copy.add_interval(empty)
             # Insert empty intervals in between non-meeting intervals
             for i in range(len(self) - 1):
-                if self._objects[i].end_time < self._objects[i+1].start_time:
-                    empty = Interval(self._objects[i].end_time, self._objects[i+1].start_time, '')
+                if self.intervals[i].end_time < self.intervals[i+1].start_time:
+                    empty = Interval(self.intervals[i].end_time, self.intervals[i+1].start_time, empty_string)
                     tier_copy.add_interval(empty)
         return tier_copy
 
