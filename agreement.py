@@ -112,7 +112,6 @@ def two_raters_table(l):
     # List of unique labels from both lists.
     categories = list(set(itertools.chain(*l)))
     cont_table = np.array([l.count(list(x)) for x in itertools.product(categories, categories)])
-    print(cont_table)
     cont_table.shape = (len(categories), len(categories))
     return cont_table
 
@@ -131,10 +130,17 @@ def n_raters_table(l):
     cont_table.shape = (len(l), len(categories))
     return cont_table
 
-def produce_aligned_labels_lists(tiers_list, regex=r'[^\s]+'):
+def produce_aligned_labels_lists(tiers_list, regex=r'[^\s]+', precision=None):
     '''Creates a list of lists of labels matching the specified
     regular expression from time-aligned intervals or points
-    in the input interval tiers.'''
+    in the input interval tiers. The allowed mismatch between
+    object timestamps can be controlled via the precision parameter.'''
+
+    # If precision is supplied, temporarily change
+    # the value of tgt.Time._precision
+    if precision is not None:
+        precision_old = tgt.Time._precision
+        tgt.Time._precision = precision
 
     if not tiers_list:
         raise Exception('The input list is empty.')
@@ -161,4 +167,9 @@ def produce_aligned_labels_lists(tiers_list, regex=r'[^\s]+'):
             raise Exception('Objects\' time stamps do not match: {0}'.format(end_times))
         else:
             labels_aligned.append([x.text for x in intervals])
+
+    # Reset tgt.Time._precision to its earlier value
+    if precision is not None:
+        tgt.Time._precision = precision_old
+
     return labels_aligned
