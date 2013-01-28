@@ -133,15 +133,18 @@ def n_raters_table(l):
 
 def produce_aligned_labels_lists(tiers_list, regex=r'[^\s]+'):
     '''Creates a list of lists of labels matching the specified
-    regular expression from time-aligned intervals of the input
-    interval tiers.'''
+    regular expression from time-aligned intervals or points
+    in the input interval tiers.'''
 
     if not tiers_list:
         raise Exception('The input list is empty.')
-    elif any([not isinstance(x, tgt.IntervalTier) for x in tiers_list]):
-        raise TypeError('Only objects of type IntervalTier can be aligned.')
-    elif len(set([len(x.intervals) for x in tiers_list])) > 1:
-        raise Exception('The numbers of intervals do not match.')
+    # Check if all elements of tiers_list are either 
+    # either PointTiers or IntervalTiers.
+    elif (not (all([isinstance(x, tgt.IntervalTier) for x in tiers_list])
+               or all([isinstance(x, tgt.PointTier) for x in tiers_list]))):
+        raise TypeError('Only objects of types IntervalTier or PointTier can be aligned.')
+    elif len(set([len(x) for x in tiers_list])) > 1:
+        raise Exception('Input tiers differ in the number of objects.')
 
     labels_aligned = []
     for intervals in itertools.izip(*[x for x in tiers_list]):
@@ -153,9 +156,9 @@ def produce_aligned_labels_lists(tiers_list, regex=r'[^\s]+'):
             continue
         # Check if start and end times match.
         elif start_times.count(start_times[0]) != len(start_times):
-            raise Exception('Start times of intervals do not match: {0}'.format(start_times))
+            raise Exception('Objects\' time stamps do not match: {0}'.format(start_times))
         elif end_times.count(end_times[0]) != len(end_times):
-            raise Exception('End times of intervals do not match: {0}'.format(end_times))
+            raise Exception('Objects\' time stamps do not match: {0}'.format(end_times))
         else:
             labels_aligned.append([x.text for x in intervals])
     return labels_aligned
