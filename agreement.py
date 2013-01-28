@@ -19,10 +19,10 @@
 
 from __future__ import division
 
-import tgt
 import itertools
 import numpy as np
 import re
+import tgt
 
 # --------------
 # Fleiss's kappa
@@ -55,6 +55,7 @@ def fleiss_chance_agreement(a):
 def fleiss_kappa(a):
     """Calculates Fleiss's kappa for the input array (with categories
     in columns and items in rows)."""
+
     p = fleiss_observed_agreement(a)
     p_e = fleiss_chance_agreement(a)
     return (p - p_e) / (1 - p_e)
@@ -66,6 +67,7 @@ def fleiss_kappa(a):
 
 def cohen_kappa(a):
     """Calculates Cohen's kappa for the input array."""
+
     totsum = np.sum(a)
     colsums = np.sum(a, 0)
     rowsums = np.sum(a, 1)
@@ -82,6 +84,7 @@ def cohen_kappa(a):
 
 def scott_pi(a):
     """Calculates Scott's Pi for the input array."""
+
     totsum = np.sum(a)
     colsums = np.sum(a, 0)
     rowsums = np.sum(a, 1)
@@ -98,8 +101,9 @@ def scott_pi(a):
 
 
 def two_raters_table(l):
-    """Returns a contingency table for two raters given a list of
-    zipped labels."""
+    """Returns a contingency matrix for two raters given a list of
+    time-aligned labels."""
+
     sublists_lengths = [len(x) for x in l]
     if any([x != 2 for x in sublists_lengths]):
         raise Exception('The length of sublists must be equal to 2')
@@ -112,10 +116,10 @@ def two_raters_table(l):
     cont_table.shape = (len(categories), len(categories))
     return cont_table
 
-
 def n_raters_table(l):
-    """Returns a contingency table for n >= 2 raters (with categories
-    in columns and items in rows) given a list of zipped labels."""
+    """Returns a contingency matrix for n >= 2 raters (with categories
+    in columns and items in rows) given a list of time-aligned labels."""
+
     sublists_lengths = [len(x) for x in l]
     if any([x < 2 for x in sublists_lengths]):
         raise Exception('The length of sublists must be at least 2')
@@ -127,29 +131,31 @@ def n_raters_table(l):
     cont_table.shape = (len(l), len(categories))
     return cont_table
 
-
 def produce_aligned_labels_lists(tiers_list, regex=r'[^\s]+'):
     '''Creates a list of lists of labels matching the specified
     regular expression from time-aligned intervals of the input
     interval tiers.'''
+
     if not tiers_list:
         raise Exception('The input list is empty.')
     elif any([not isinstance(x, tgt.IntervalTier) for x in tiers_list]):
-        raise TypeError('Not an IntervalTier')
+        raise TypeError('Only objects of type IntervalTier can be aligned.')
     elif len(set([len(x.intervals) for x in tiers_list])) > 1:
-        raise Exception('The numbers of intervals do not match')
+        raise Exception('The numbers of intervals do not match.')
+
     labels_aligned = []
-    for intervals in itertools.izip(*[x.intervals for x in tiers_list]):
+    for intervals in itertools.izip(*[x for x in tiers_list]):
         start_times = [x.start_time for x in intervals]
         end_times = [x.end_time for x in intervals]
         labels = [x.text for x in intervals]
         if any([not re.search(regex, x) for x in labels]):
             # Only go on if labels of all intervals match the regular expression.
             continue
+        # Check if start and end times match.
         elif start_times.count(start_times[0]) != len(start_times):
-            raise Exception('Start times of boundaries do not match: {0}'.format(start_times))
+            raise Exception('Start times of intervals do not match: {0}'.format(start_times))
         elif end_times.count(end_times[0]) != len(end_times):
-            raise Exception('End times of boundaries do not match: {0}'.format(end_times))
+            raise Exception('End times of intervals do not match: {0}'.format(end_times))
         else:
             labels_aligned.append([x.text for x in intervals])
     return labels_aligned
