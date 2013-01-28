@@ -24,5 +24,5 @@ setup(
     description='Read, write, and manipulate Praat TextGrid files',
     version='0.9',
     author='Hendrik Buschmeier',
-    py_modules=['tgt']
+    py_modules=['tgt', 'agreement']
 )
