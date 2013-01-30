@@ -25,6 +25,7 @@ from __future__ import print_function, division
 
 import os
 import sys
+
 import tgt
 
 EXTENSION = 'TextGrid'
@@ -32,7 +33,7 @@ EXTENSION = 'TextGrid'
 def print_tiernames(filenames):
 	for filename in filenames:
 		try:
-			tg = tgt.read_textgrid(filename)
+			tg = tgt.io.read_textgrid(filename)
 			print(filename)
 			for tiername in tg.get_tier_names():
 				print('\t' + tiername)
@@ -50,7 +51,7 @@ def main(argv=None):
 	for arg in argv[1:]:
 		if os.path.exists(arg):
 			if os.path.isdir(arg):
-				list_of_tg_files += [arg + '/' + filename for filename in filter(lambda x: x.endswith(EXTENSION), os.listdir(arg))]
+				list_of_tg_files += [arg + '/' + filename for filename in os.listdir(arg) if filename.endswith(EXTENSION)]
 			else:
 				list_of_tg_files.append(arg)
 		else:

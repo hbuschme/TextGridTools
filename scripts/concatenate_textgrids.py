@@ -17,11 +17,9 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from __future__ import print_function, division
-
+import argparse
 import copy
 
-import argparse
 import tgt
 
 def parse_arguments():
@@ -34,17 +32,19 @@ def parse_arguments():
                         help='Path to the resulting file.')
     argparser.add_argument('-e', type=str, nargs=1, dest='encoding', default='utf-8',
                         help='File encoding (defaults to UTF-8).')
+    argparser.add_argument('-t', type=str, nargs=1, dest='type', default='short',
+                        help='TextGrid format: short, long (defaults to short)')
     return vars(argparser.parse_args())
 
 def main():
     # Parse the command-line arguments.
     args = parse_arguments()
-
     # Read all TextGrids into a list.
-    textgrids = [tgt.read_textgrid(path, args['encoding']) for path in args['input_files']]
-    textgrid_concatenated = tgt.concatenate_textgrids(textgrids)
+    textgrids = [tgt.io.read_textgrid(path, args['encoding']) for path in args['input_files']]
+    textgrid_concatenated = tgt.util.concatenate_textgrids(textgrids)
     # Write the concatenated TextGrid to a file.
-    textgrid_concatenated.write_to_file(args['output_file'][0], args['encoding'])
+    tgt.io.write_to_file(textgrid=textgrid_concatenated, filename=args['output_file'][0], format='short', encoding=args['encoding'])
+
 
 if __name__ == '__main__':
     main()

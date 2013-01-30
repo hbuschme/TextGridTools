@@ -1,8 +1,7 @@
-#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
 # Calculate various agreement measures.
-# Copyright (C) 2012 Marcin Włodarczak
+# Copyright (C) 2012-2013 Marcin Włodarczak
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -17,12 +16,14 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from __future__ import division
+from __future__ import division, print_function
 
 import itertools
-import numpy as np
 import re
-import tgt
+
+import numpy as np
+
+from .core import IntervalTier, PointTier, Time
 
 # --------------
 # Fleiss's kappa
