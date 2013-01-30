@@ -374,7 +374,19 @@ class IntervalTier(Tier):
         return self._get_objects_between_timepoints(start, end, left_overlap, right_overlap)
 
     def get_nearest_interval(self, time, direction='both', regex=r'[^\s]+', exclude_overlapped=False):
-        pass
+        '''Get the interval(s) nearest to time.
+
+        Boundary specifies whether the distance to an interval
+        is calculated based on its start time ('start'), end time
+        ('end') or both ('both'). Direction specifies whether it is
+        looked to the left hand side of time ('left'), to the right
+        hand side of time ('right') or to both sides ('both').
+        Intervals overlapping with time can be excluded.
+
+        Note: When time lies exactly on a boundary, this boundary is
+        both to the left and to the right of time.
+        '''
+        return self._get_nearest_objects(self, time, direction, regex, exclude_overlapped)
 
     def get_intervals_with_regex(self, regex=r'[^\s]+', n=0):
         '''Get intervals with text matching the regex pattern.
