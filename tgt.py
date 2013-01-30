@@ -237,7 +237,7 @@ class Tier(object):
         ('end') or both ('both'). Direction specifies whether it is
         looked to the left hand side of time ('left'), to the right
         hand side of time ('right') or to both sides ('both').
-        Annotation objects overlapping with time can be excluded.
+        Annotations overlapping with time can be excluded.
 
         Note: When time lies exactly on a boundary, this boundary is
         both to the left and to the right of time.
@@ -484,11 +484,11 @@ class PointTier(Tier):
         return self._get_objects_with_text(text, n, regex=False)
 
 
-class AnnotationObject(object):
+class Annotation(object):
 
     def __init__(self, start_time, end_time, text=''):
-        '''Initialise the AnnotationObject.'''
-        super(AnnotationObject, self).__init__()
+        '''Initialise the Annotation.'''
+        super(Annotation, self).__init__()
         self._start_time = Time(start_time)
         self._end_time = Time(end_time)
         if start_time > end_time:
@@ -518,7 +518,7 @@ class AnnotationObject(object):
         doc='The end time.')
 
     def duration(self):
-        """Get duration of this interval."""
+        """Get duration of this annotation."""
         return self.end_time - self.start_time
 
     def __eq__(self, other):
@@ -528,11 +528,11 @@ class AnnotationObject(object):
                 and self.text == other.text)
 
     def __repr__(self):
-        return u'AnnotationObject({0}, {1}, "{2}")'.format(self.start_time,
+        return u'Annotation({0}, {1}, "{2}")'.format(self.start_time,
             self.end_time, self.text)
 
 
-class Interval(AnnotationObject):
+class Interval(Annotation):
     '''An interval of two points of time with a text label.'''
 
     def __init__(self, start_time, end_time, text=''):
@@ -543,10 +543,10 @@ class Interval(AnnotationObject):
         return u'Interval({0}, {1}, "{2}")'.format(self.start_time, self.end_time, self.text)
 
 
-class Point(AnnotationObject):
+class Point(Annotation):
     '''A point of time with a text label.
 
-    Internally an AnnotationObject where start time equals end time.
+    Internally an Annotation where start time equals end time.
     '''
 
     def __init__(self, time, text=''):

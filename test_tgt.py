@@ -65,42 +65,42 @@ class TestTier(unittest.TestCase):
         t = tgt.Tier()
 
         # Add to empty tier
-        ao1 = tgt.AnnotationObject(0.0, 0.5, 'ao1')
+        ao1 = tgt.Annotation(0.0, 0.5, 'ao1')
         t._add_object(ao1)
         self.assertTrue(len(t) == 1)
         self.assertTrue(t.start_time == 0)
         self.assertTrue(t.end_time == 0.5)
 
         # Append to tier leaving empty space
-        ao2 = tgt.AnnotationObject(0.6, 0.75, 'ao2')
+        ao2 = tgt.Annotation(0.6, 0.75, 'ao2')
         t._add_object(ao2)
         self.assertTrue(len(t) == 2)
         self.assertTrue(t.start_time == 0)
         self.assertTrue(t.end_time == 0.75)
 
-        ao3 = tgt.AnnotationObject(0.81, 0.9, 'ao3')
+        ao3 = tgt.Annotation(0.81, 0.9, 'ao3')
         t._add_object(ao3)
         self.assertTrue(len(t) == 3)
         self.assertTrue(t.start_time == 0)
         self.assertTrue(t.end_time == 0.9)
 
-        # Insert between existing annotation objects
+        # Insert between existing annotations
         # - leaving gaps on both sides
-        ao4 = tgt.AnnotationObject(0.75, 0.77, 'ao4')
+        ao4 = tgt.Annotation(0.75, 0.77, 'ao4')
         t._add_object(ao4) 
         self.assertTrue(len(t) == 4)
         self.assertTrue(t.start_time == 0)
         self.assertTrue(t.end_time == 0.9)
 
-        # - meeting preceeding annotation object
-        ao5 = tgt.AnnotationObject(0.77, 0.79, 'ao5')
+        # - meeting preceeding annotation
+        ao5 = tgt.Annotation(0.77, 0.79, 'ao5')
         t._add_object(ao5)
         self.assertTrue(len(t) == 5)
         self.assertTrue(t.start_time == 0)
         self.assertTrue(t.end_time == 0.9)
 
-        # - meeting preceeding and succeeding annotation object
-        ao6 = tgt.AnnotationObject(0.8, 0.81, 'ao6')
+        # - meeting preceeding and succeeding annotation
+        ao6 = tgt.Annotation(0.8, 0.81, 'ao6')
         t._add_object(ao6) 
         self.assertTrue(len(t) == 6)
         self.assertTrue(t.start_time == 0)
@@ -109,27 +109,27 @@ class TestTier(unittest.TestCase):
         # Insert at a place that is already occupied
         # - within ao3
         with self.assertRaises(ValueError):
-            ao7 = tgt.AnnotationObject(0.85, 0.87, 'ao7')
+            ao7 = tgt.Annotation(0.85, 0.87, 'ao7')
             t._add_object(ao7)
         # - same boundaries as ao3
         with self.assertRaises(ValueError):
-            ao8 = tgt.AnnotationObject(0.81, 0.9, 'ao8')
+            ao8 = tgt.Annotation(0.81, 0.9, 'ao8')
             t._add_object(ao8)
         # - start time earlier than start time of ao3
         with self.assertRaises(ValueError):
-            ao9 = tgt.AnnotationObject(0.8, 0.89, 'ao9')
+            ao9 = tgt.Annotation(0.8, 0.89, 'ao9')
             t._add_object(ao9)
         # - end time later than end time of ao3
         with self.assertRaises(ValueError):
-            ao10 = tgt.AnnotationObject(0.82, 0.91, 'ao10')
+            ao10 = tgt.Annotation(0.82, 0.91, 'ao10')
             t._add_object(ao10)
         # - start time earlier than start time of ao3 and 
         #   end time later than end time of ao3
         with self.assertRaises(ValueError):
-            ao11 = tgt.AnnotationObject(0.8, 0.91, 'ao11')
+            ao11 = tgt.Annotation(0.8, 0.91, 'ao11')
             t._add_object(ao11)
 
-        # - Check that no annotation object was added
+        # - Check that no annotation was added
         self.assertTrue(len(t) == 6)
         self.assertTrue(t.start_time == 0)
         self.assertTrue(t.end_time == 0.9)
@@ -143,25 +143,25 @@ class TestTier(unittest.TestCase):
 
         # Check whether adding an annotation within specified
         # start and end times leaves them unchanged
-        t._add_object(tgt.AnnotationObject(1.1, 1.9, 'text'))
+        t._add_object(tgt.Annotation(1.1, 1.9, 'text'))
         self.assertTrue(t.start_time == 1)
         self.assertTrue(t.end_time == 2)
 
         # Expand end time by adding an annotation that ends later
-        t._add_object(tgt.AnnotationObject(2, 3, 'text'))
+        t._add_object(tgt.Annotation(2, 3, 'text'))
         self.assertTrue(t.start_time == 1)
         self.assertTrue(t.end_time == 3)
 
         # Expand start time by adding an annotation that starts ealier
-        t._add_object(tgt.AnnotationObject(0, 1, 'text'))
+        t._add_object(tgt.Annotation(0, 1, 'text'))
         self.assertTrue(t.start_time == 0)
         self.assertTrue(t.end_time == 3)
 
     def test_queries(self):
         t = tgt.Tier()
-        ao1 = tgt.AnnotationObject(0, 1, 'ao1')
-        ao2 = tgt.AnnotationObject(1, 2, 'ao2')
-        ao3 = tgt.AnnotationObject(5, 6, 'ao3')
+        ao1 = tgt.Annotation(0, 1, 'ao1')
+        ao2 = tgt.Annotation(1, 2, 'ao2')
+        ao3 = tgt.Annotation(5, 6, 'ao3')
         t._add_objects([ao1, ao2, ao3])
 
         # Query with start time
@@ -216,9 +216,9 @@ class TestTier(unittest.TestCase):
         self.assertTrue(ao1_retr[0] == ao1)
 
         # - mutiple matches
-        ao31 = tgt.AnnotationObject(7, 8, 'ao3')
-        ao32 = tgt.AnnotationObject(9, 10, 'ao3')
-        ao33 = tgt.AnnotationObject(11, 12, 'ao3')
+        ao31 = tgt.Annotation(7, 8, 'ao3')
+        ao32 = tgt.Annotation(9, 10, 'ao3')
+        ao33 = tgt.Annotation(11, 12, 'ao3')
         t._add_objects([ao31, ao32, ao33])
 
         ao3x_retr = t._get_objects_with_matching_text('ao3')
@@ -242,10 +242,10 @@ class TestTier(unittest.TestCase):
 
     def test_get_nearest_objects(self):
         t = tgt.Tier()
-        ao1 = tgt.AnnotationObject(0, 1, 'ao1')
-        ao2 = tgt.AnnotationObject(1, 2, 'ao2')
-        ao3 = tgt.AnnotationObject(3, 4, 'ao3')
-        ao4 = tgt.AnnotationObject(5, 6, 'ao4')
+        ao1 = tgt.Annotation(0, 1, 'ao1')
+        ao2 = tgt.Annotation(1, 2, 'ao2')
+        ao3 = tgt.Annotation(3, 4, 'ao3')
+        ao4 = tgt.Annotation(5, 6, 'ao4')
         t._add_objects([ao1, ao2, ao3, ao4])
 
         # - coincides with start time of the first interval
