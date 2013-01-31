@@ -62,8 +62,10 @@ def shift_boundaries(tier, left, right):
     return tier_shifted
 
 
-def get_overlapping_intervals(tier1, tier2, regex=r'[^\s]+', overlap_label='overlap'):
+def get_overlapping_intervals(tier1, tier2, regex=r'[^\s]+', overlap_label=None):
     '''Return a list of overlaps between intervals of tier1 and tier2.
+    If no overlap_label is specified, concatenated labels
+    of overlapping intervals are used as the resulting label.
     
     All nonempty intervals are included in the search by default.
     '''
@@ -78,7 +80,11 @@ def get_overlapping_intervals(tier1, tier2, regex=r'[^\s]+', overlap_label='over
         hi = min(intervals1[i].end_time, intervals2[j].end_time)
         if (lo < hi and re.search(regex, intervals1[i].text)
             and re.search(regex, intervals2[j].text)):
-            overlaps.append(Interval(lo, hi, overlap_label))
+            if overlap_label is None:
+                text = '+'.join([intervals1[i].text, intervals2[j].text])
+            else:
+                text = overlap_label
+            overlaps.append(Interval(lo, hi, text))
         if intervals1[i].end_time < intervals2[j].end_time:
             i += 1
         else:
