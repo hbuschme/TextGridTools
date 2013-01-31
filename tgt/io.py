@@ -196,7 +196,7 @@ def export_to_short_textgrid(textgrid):
             result += [u'{0}\n"{1}"'.format(obj.time, obj.text)
                        for obj in tier]
         else:
-            Exception('Unknown tier type: {0}'.format(tier.name))
+            raise Exception('Unknown tier type: {0}'.format(tier.name))
     return '\n'.join([unicode(x) for x in result])
 
 
@@ -230,7 +230,7 @@ def export_to_long_textgrid(textgrid):
                            '\t\t\tnumber = ' + obj.time,
                            '\t\t\tmark = "' + obj.text + '"']
         else:
-            Exception('Unknown tier type: {0}'.format(tier.name))
+            raise Exception('Unknown tier type: {0}'.format(tier.name))
     return '\n'.join([unicode(x) for x in result])
 
 
@@ -283,7 +283,7 @@ def export_to_elan(textgrid, encoding='utf-8', include_empty_intervals=False,
                         u'</ANNOTATION>']
                     annotation_id_count += 1
         else:
-            Exception('Unknown tier type: {0}'.format(tier.name))
+            raise Exception('Unknown tier type: {0}'.format(tier.name))
         annotations.append(u'</TIER>')
     # Create time stamp information
     time_info = [u'<TIME_ORDER>']
@@ -314,7 +314,7 @@ def export_to_table(textgrid, separator=','):
                 result.append(separator.join([unicode(tier.name), unicode(tier.__class__.__name__),
                                               unicode(obj.time), unicode(obj.time), obj.text]))
         else:
-            Exception('Unknown tier type: {0}'.format(tier.name))
+            raise Exception('Unknown tier type: {0}'.format(tier.name))
     return '\n'.join([unicode(x) for x in result])
 
 # Listing of currently supported export formats.
@@ -336,4 +336,4 @@ def write_to_file(textgrid, filename, format='short', encoding='utf-8', **kwargs
         if format in _EXPORT_FORMATS:
             f.write(_EXPORT_FORMATS[format](textgrid, **kwargs))
         else:
-            Exception('Unknown output format: {0}'.format(format))
+            raise Exception('Unknown output format: {0}'.format(format))
