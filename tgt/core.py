@@ -412,12 +412,12 @@ class IntervalTier(Tier):
             tier_copy.add_interval(empty)
         else:
             # If necessary, add empty interval at start of tier
-            if self.intervals[0].start_time > self.start_time:
-                empty = Interval(self.start_time, self.intervals[0].start_time, empty_string)
+            if self.intervals[0].start_time > start_time:
+                empty = Interval(start_time, self.intervals[0].start_time, empty_string)
                 tier_copy.add_interval(empty)
             # If necessary, add empty interval at end of tier
-            if self.intervals[-1].end_time < self.end_time:
-                empty = Interval(self.intervals[-1].end_time, self.end_time, empty_string)
+            if self.intervals[-1].end_time < end_time:
+                empty = Interval(self.intervals[-1].end_time, end_time, empty_string)
                 tier_copy.add_interval(empty)
             # Insert empty intervals in between non-meeting intervals
             for i in range(len(self) - 1):
