@@ -18,6 +18,7 @@
 
 from __future__ import division, print_function
 
+import copy
 import codecs
 import datetime
 
