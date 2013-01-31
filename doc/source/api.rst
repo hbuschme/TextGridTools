@@ -1,9 +1,14 @@
 Documentation
 =============
 
-.. automodule:: tgt
+.. automodule:: tgt.core
    :members:
 
-.. automodule:: agreement
+.. automodule:: tgt.io
    :members:
 
+.. automodule:: tgt.util
+   :members:
+
+.. automodule:: tgt.agreement
+   :members:
