@@ -100,7 +100,7 @@ def scott_pi(a):
 # Functions producing contingency tables from lists of labels
 # ----------------------------------------------------------
 
-def align_labels(tiers_list, regex=r'[^\s]+', precision=None):
+def align_labels(tiers_list, precision=None, regex=r'[^\s]+'):
     '''Create a list of lists for all time-aligned Interval
     or Point object in tiers_list, whose text matches regex.
     For example:
@@ -121,7 +121,7 @@ def align_labels(tiers_list, regex=r'[^\s]+', precision=None):
         Time._precision = precision
 
     if len(tiers_list) < 2:
-        raise Exception('At least two Tier objects need to be provided.')
+        raise Exception('At least two tiers need to be provided')
     # Check if all elements of tiers_list are either 
     # either PointTiers or IntervalTiers.
     elif (not (all([isinstance(x, IntervalTier) for x in tiers_list])
@@ -134,6 +134,7 @@ def align_labels(tiers_list, regex=r'[^\s]+', precision=None):
     for intervals in itertools.izip(*[x for x in tiers_list]):
         start_times = [x.start_time for x in intervals]
         end_times = [x.end_time for x in intervals]
+        labels = [x.text for x in intervals]
         if any([not re.search(regex, x) for x in labels]):
             # Only go on if labels of all intervals match the regular expression.
             continue
@@ -143,7 +144,7 @@ def align_labels(tiers_list, regex=r'[^\s]+', precision=None):
         elif end_times.count(end_times[0]) != len(end_times):
             raise Exception('Objects\' time stamps do not match: {0}'.format(end_times))
         else:
-            labels_aligned.append([x.text for x in intervals])
+            labels_aligned.append(labels)
 
     # Reset Time._precision to its original value
     if precision is not None:
@@ -151,13 +152,13 @@ def align_labels(tiers_list, regex=r'[^\s]+', precision=None):
 
     return labels_aligned
 
-def cont_table(tiers_list, regex, precision):
+def cont_table(tiers_list, precision, regex):
     '''Produce a contingency table from annotations in tiers_list
     whose text matches regex, and whose time stamps are not
     misaligned by more than precision.
     '''
 
-    labels_aligned = align_labels(tiers_list, regex, precision)
+    labels_aligned = align_labels(tiers_list, precision, regex)
 
     # List of unique labels from both lists.
     categories = list(set(itertools.chain(*labels_aligned)))
@@ -165,10 +166,35 @@ def cont_table(tiers_list, regex, precision):
     # A 2-by-2 array
     if len(labels_aligned[0]) == 2:
         categories_product = itertools.product(categories, categories)
-        cont_table = np.array([labels_aligned.count(list(x)) for x in categories_product])
-        cont_table.shape = (len(categories), len(categories))
+        table = np.array([labels_aligned.count(list(x)) for x in categories_product])
+        table.shape = (len(categories), len(categories))
     # An n-by-m array
     else:
-        cont_table = np.array([x.count(y) for x in labels_aligned for y in categories])
-        cont_table.shape = (len(labels_aligned), len(categories))
-    return cont_table
+        table = np.array([x.count(y) for x in labels_aligned for y in categories])
+        table.shape = (len(labels_aligned), len(categories))
+    return table
+
+def agreement(tiers_list, method, precision=None, regex=r'[^\s]+'):
+
+    _AGREEMENT_METHODS = {'cohen-kappa': cohen_kappa,
+                          'fleiss-kappa': fleiss_kappa,
+                          'scott-pi': scott_pi}
+    
+    if method not in _AGREEMENT_METHODS:
+        available_methods = ', '.join(_AGREEMENT_METHODS.keys())
+        raise Exception('Unsupported method. Available options are {0}.'.format(available_methods))
+    elif len(tiers_list) < 2:
+        raise Exception('At least two tiers need to be provided')
+    elif len(tiers_list) == 2 and method in ['cohen-kappa', 'scott-pi']:
+        agr = _AGREEMENT_METHODS[method](cont_table(tiers_list, precision, regex))
+        return [x.name for x in tiers_list] + [agr]
+    elif len(tiers_list) > 2 and method == 'fleiss-kappa':
+        agr = _AGREEMENT_METHODS[method](cont_table(tiers_list, precision, regex))
+        return [x.name for x in tiers_list] + [agr]
+    else:
+        tier_combinations = itertools.combinations(tiers_list, 2)
+        agr = []
+        for tiers_pair in tier_combinations:
+            agr_pair = _AGREEMENT_METHODS[method](cont_table(tiers_pair, precision, regex))
+            agr.append([x.name for x in tiers_pair] + [agr_pair])
+        return agr
