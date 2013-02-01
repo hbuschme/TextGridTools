@@ -31,10 +31,10 @@ from .core import IntervalTier, PointTier, Time
 
 
 def fleiss_observed_agreement(a):
-    """Return the observed agreement for the input array."""
+    '''Return the observed agreement for the input array.'''
 
     def per_subject_agreement(row):
-        """Return the observed agreement for the i-th subject."""
+        '''Return the observed agreement for the i-th subject.'''
         number_of_objects = np.sum(row)
         return (np.sum(np.square(row)) - number_of_objects) / (number_of_objects * (number_of_objects - 1))
 
@@ -43,10 +43,10 @@ def fleiss_observed_agreement(a):
 
 
 def fleiss_chance_agreement(a):
-    """Returns the chance agreement for the input array."""
+    '''Returns the chance agreement for the input array.'''
 
     def per_category_probabilities(a):
-        """The proportion of all assignments which were to the j-th category."""
+        '''The proportion of all assignments which were to the j-th category.'''
         cat_sums = np.sum(a, axis=0)
         return cat_sums / np.sum(cat_sums)
 
@@ -54,8 +54,8 @@ def fleiss_chance_agreement(a):
 
 
 def fleiss_kappa(a):
-    """Calculates Fleiss's kappa for the input array (with categories
-    in columns and items in rows)."""
+    '''Calculates Fleiss's kappa for the input array (with categories
+    in columns and items in rows).'''
 
     p = fleiss_observed_agreement(a)
     p_e = fleiss_chance_agreement(a)
@@ -67,7 +67,7 @@ def fleiss_kappa(a):
 
 
 def cohen_kappa(a):
-    """Calculates Cohen's kappa for the input array."""
+    '''Calculates Cohen's kappa for the input array.'''
 
     totsum = np.sum(a)
     colsums = np.sum(a, 0)
@@ -84,7 +84,7 @@ def cohen_kappa(a):
 
 
 def scott_pi(a):
-    """Calculates Scott's Pi for the input array."""
+    '''Calculates Scott's Pi for the input array.'''
 
     totsum = np.sum(a)
     colsums = np.sum(a, 0)
@@ -100,55 +100,32 @@ def scott_pi(a):
 # Functions producing contingency tables from lists of labels
 # ----------------------------------------------------------
 
+def align_labels(tiers_list, regex=r'[^\s]+', precision=None):
+    '''Create a list of lists for all time-aligned Interval
+    or Point object in tiers_list, whose text matches regex.
+    For example:
 
-def two_raters_table(l):
-    """Returns a contingency matrix for two raters given a list of
-    time-aligned labels."""
+    [[label_1-tier_1, label_1-tier_2, label_1-tier_3],
+     [label_2-tier_1, label_2-tier_2, label_2-tier_3],
+     ...
+     [label_n-tier_n, label_n-tier_n, label_n-tier_n]]
 
-    sublists_lengths = [len(x) for x in l]
-    if any([x != 2 for x in sublists_lengths]):
-        raise Exception('The length of sublists must be equal to 2')
-    if sublists_lengths.count(sublists_lengths[0]) != len(sublists_lengths):
-        raise Exception('The lengths of sublists differ.')
-    # List of unique labels from both lists.
-    categories = list(set(itertools.chain(*l)))
-    cont_table = np.array([l.count(list(x)) for x in itertools.product(categories, categories)])
-    cont_table.shape = (len(categories), len(categories))
-    return cont_table
-
-def n_raters_table(l):
-    """Returns a contingency matrix for n >= 2 raters (with categories
-    in columns and items in rows) given a list of time-aligned labels."""
-
-    sublists_lengths = [len(x) for x in l]
-    if any([x < 2 for x in sublists_lengths]):
-        raise Exception('The length of sublists must be at least 2')
-    if sublists_lengths.count(sublists_lengths[0]) != len(sublists_lengths):
-        raise Exception('The lengths of sublists differ')
-    # List of unique labels from all lists.
-    categories = list(set(itertools.chain(*l)))
-    cont_table = np.array([x.count(y) for x in l for y in categories])
-    cont_table.shape = (len(l), len(categories))
-    return cont_table
-
-def produce_aligned_labels_lists(tiers_list, regex=r'[^\s]+', precision=None):
-    '''Creates a list of lists of labels matching the specified
-    regular expression from time-aligned intervals or points
-    in the input interval tiers. The allowed mismatch between
-    object timestamps can be controlled via the precision parameter.'''
+    The allowed mismatch between object's timestamps can be
+    controlled via the precision parameter.
+    '''
 
     # If precision is supplied, temporarily change
-    # the value of tgt.Time._precision
+    # the value of Time._precision
     if precision is not None:
-        precision_old = tgt.Time._precision
-        tgt.Time._precision = precision
+        precision_old = Time._precision
+        Time._precision = precision
 
-    if not tiers_list:
-        raise Exception('The input list is empty.')
+    if len(tiers_list) < 2:
+        raise Exception('At least two Tier objects need to be provided.')
     # Check if all elements of tiers_list are either 
     # either PointTiers or IntervalTiers.
-    elif (not (all([isinstance(x, tgt.IntervalTier) for x in tiers_list])
-               or all([isinstance(x, tgt.PointTier) for x in tiers_list]))):
+    elif (not (all([isinstance(x, IntervalTier) for x in tiers_list])
+               or all([isinstance(x, PointTier) for x in tiers_list]))):
         raise TypeError('Only objects of types IntervalTier or PointTier can be aligned.')
     elif len(set([len(x) for x in tiers_list])) > 1:
         raise Exception('Input tiers differ in the number of objects.')
@@ -157,7 +134,6 @@ def produce_aligned_labels_lists(tiers_list, regex=r'[^\s]+', precision=None):
     for intervals in itertools.izip(*[x for x in tiers_list]):
         start_times = [x.start_time for x in intervals]
         end_times = [x.end_time for x in intervals]
-        labels = [x.text for x in intervals]
         if any([not re.search(regex, x) for x in labels]):
             # Only go on if labels of all intervals match the regular expression.
             continue
@@ -169,8 +145,30 @@ def produce_aligned_labels_lists(tiers_list, regex=r'[^\s]+', precision=None):
         else:
             labels_aligned.append([x.text for x in intervals])
 
-    # Reset tgt.Time._precision to its earlier value
+    # Reset Time._precision to its original value
     if precision is not None:
-        tgt.Time._precision = precision_old
+        Time._precision = precision_old
 
     return labels_aligned
+
+def cont_table(tiers_list, regex, precision):
+    '''Produce a contingency table from annotations in tiers_list
+    whose text matches regex, and whose time stamps are not
+    misaligned by more than precision.
+    '''
+
+    labels_aligned = align_labels(tiers_list, regex, precision)
+
+    # List of unique labels from both lists.
+    categories = list(set(itertools.chain(*labels_aligned)))
+
+    # A 2-by-2 array
+    if len(labels_aligned[0]) == 2:
+        categories_product = itertools.product(categories, categories)
+        cont_table = np.array([labels_aligned.count(list(x)) for x in categories_product])
+        cont_table.shape = (len(categories), len(categories))
+    # An n-by-m array
+    else:
+        cont_table = np.array([x.count(y) for x in labels_aligned for y in categories])
+        cont_table.shape = (len(labels_aligned), len(categories))
+    return cont_table
