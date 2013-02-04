@@ -20,6 +20,7 @@ from .core import TextGrid
 from .core import Tier, IntervalTier, PointTier
 from .core import Annotation, Interval, Point
 from .core import Time
+from .io import read_textgrid, write_to_file
 from . import agreement, io, util
 
 __all__ = [
@@ -27,5 +28,7 @@ __all__ = [
     'Tier', 'IntervalTier', 'PointTier',
     'Annotation', 'Interval', 'Point',
     'Time',
-    'agreement', 'io', 'util', 
+    'read_textgird,' 'write_to_file',
+    'agreement', 'io', 'util',
+
 ]
