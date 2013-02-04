@@ -56,7 +56,7 @@ def read_short_textgrid(filename, stg, include_empty_intervals=False):
         while i < len(stg_extract):
             text = stg_extract[i + 2].strip('"') # text w/o quotes
             if include_empty_intervals or text.strip() != '':
-                it.add_interval(Interval(
+                it.add_annotation(Interval(
                     Time(stg_extract[i]), # left bound
                     Time(stg_extract[i + 1]), # right bound
                     text))
@@ -72,7 +72,7 @@ def read_short_textgrid(filename, stg, include_empty_intervals=False):
         i = 5
         while i < len(stg_extract):
             text = stg_extract[i + 1].strip('"') # text w/o quotes
-            pt.add_point(Point(
+            pt.add_annotation(Point(
                 stg_extract[i], # time
                 text))   
             i += 2
@@ -115,7 +115,7 @@ def read_long_textgrid(filename, stg, include_empty_intervals=False):
         while i < len(stg_extract):
             text = get_attr_val(stg_extract[i + 2])[1:-1] # text w/o quotes
             if include_empty_intervals or text.strip() != '':
-                it.add_interval(Interval(
+                it.add_annotation(Interval(
                     Time(get_attr_val(stg_extract[i])), # left bound
                     Time(get_attr_val(stg_extract[i + 1])), # right bound
                     text))
@@ -131,7 +131,7 @@ def read_long_textgrid(filename, stg, include_empty_intervals=False):
         i = 7
         while i < len(stg_extract):
             text = get_attr_val(stg_extract[i + 1])[1:-1] # text w/o quotes
-            pt.add_point(Point(
+            pt.add_annotation(Point(
                 Time(get_attr_val(stg_extract[i])), # time
                 text))
             i += 3
@@ -316,6 +316,7 @@ def export_to_table(textgrid, separator=','):
         else:
             raise Exception('Unknown tier type: {0}'.format(tier.name))
     return '\n'.join([unicode(x) for x in result])
+
 
 # Listing of currently supported export formats.
 _EXPORT_FORMATS = {
