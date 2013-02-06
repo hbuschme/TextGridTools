@@ -56,7 +56,7 @@ def shift_boundaries(tier, left, right):
         elif i == len(tier.intervals) - 1 or interval_end_shifted > tier_end_shifted:
             interval_end_shifted = tier_end_shifted
 
-        tier_shifted.add_interval(Interval(interval_start_shifted,
+        tier_shifted.add_annotation(Interval(interval_start_shifted,
                                            interval_end_shifted,
                                            interval.text))
     return tier_shifted
@@ -125,7 +125,7 @@ def concatenate_textgrids(textgrids, ignore_nonmatching_tiers=False):
                     interval.start_time += tot_duration
                     interval.end_time += tot_duration
                     intervals.append(interval)
-                tiers[tier.name].add_intervals(intervals)
+                tiers[tier.name].add_annotations(intervals)
         tot_duration += textgrid.end_time
     # Create a new TextGrid and add the concatenated tiers
     textgrid_concatenated = TextGrid()
@@ -136,7 +136,7 @@ def concatenate_textgrids(textgrids, ignore_nonmatching_tiers=False):
 
 
 def merge_textgrids(textgrids, ignore_duplicates=True):
-    '''Return a TextGrid object with tiers in all textgrids.
+    '''Return a TextGrid object with tiers in all textgrids.p
 
     If ignore_duplicates is False, tiers with equal names are renamed
     by adding a path of the textgrid or a unique number incremented
