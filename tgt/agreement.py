@@ -122,7 +122,7 @@ def align_labels(tiers_list, precision=None, regex=r'[^\s]+'):
 
     if len(tiers_list) < 2:
         raise Exception('At least two tiers need to be provided')
-    # Check if all elements of tiers_list are either 
+    # Check if all elements of tiers_list are either
     # either PointTiers or IntervalTiers.
     elif (not (all([isinstance(x, IntervalTier) for x in tiers_list])
                or all([isinstance(x, PointTier) for x in tiers_list]))):
@@ -134,7 +134,7 @@ def align_labels(tiers_list, precision=None, regex=r'[^\s]+'):
     for intervals in itertools.izip(*[x for x in tiers_list]):
         start_times = [x.start_time for x in intervals]
         end_times = [x.end_time for x in intervals]
-        labels = [x.text for x in intervals]
+        labels = [x.text.strip() for x in intervals]
         if any([not re.search(regex, x) for x in labels]):
             # Only go on if labels of all intervals match the regular expression.
             continue
@@ -179,7 +179,7 @@ def agreement(tiers_list, method, precision=None, regex=r'[^\s]+'):
     _AGREEMENT_METHODS = {'cohen-kappa': cohen_kappa,
                           'fleiss-kappa': fleiss_kappa,
                           'scott-pi': scott_pi}
-    
+
     if method not in _AGREEMENT_METHODS:
         available_methods = ', '.join(_AGREEMENT_METHODS.keys())
         raise Exception('Unsupported method. Available options are {0}.'.format(available_methods))
