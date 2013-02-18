@@ -128,7 +128,7 @@ class Tier(object):
         self.name = name
         self._objects = []
         if objects is not None and objects != []:
-            self._add_objects(objects)
+            self.add_annotations(objects)
 
     def _get_start_time(self):
         '''Get start time of this tier.'''
