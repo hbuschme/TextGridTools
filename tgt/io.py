@@ -21,6 +21,7 @@ from __future__ import division, print_function
 import copy
 import codecs
 import datetime
+import collections
 
 from .core import TextGrid, IntervalTier, Interval, PointTier, Point, Time
 
@@ -210,7 +211,7 @@ def export_to_long_textgrid(textgrid):
               'tiers? <exists>',
               'size = ' + unicode(len(textgrid)),
               'item []:']
-    textgrid_corrected = correct_end_times(textgrid)
+    textgrid_corrected = correct_start_end_times_and_fill_gaps(textgrid)
     for i, tier in enumerate(textgrid_corrected):
         result += ['\titem [{0}]:'.format(i + 1),
                    '\t\tclass = "{0}"'.format(tier.__class__.__name__),
