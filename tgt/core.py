@@ -462,6 +462,11 @@ class Annotation(object):
                 and self.end_time == other.end_time
                 and self.text == other.text)
 
+    def __ne__(self, other):
+        return not self.__eq__(other)
+
+    __hash__ = object.__hash__
+
     def __repr__(self):
         return u'Annotation({0}, {1}, "{2}")'.format(self.start_time,
             self.end_time, self.text)
@@ -512,7 +517,9 @@ class Time(float):
         return math.fabs(self - other) < self._precision
 
     def __ne__(self, other):
-        return math.fabs(self - other) > self._precision
+        return math.fabs(self - other) >= self._precision
+
+    __hash__ = float.__hash__
 
     def __gt__(self, other):
         return self != other and self - other > 0
