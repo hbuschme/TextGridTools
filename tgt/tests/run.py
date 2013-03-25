@@ -23,15 +23,15 @@ import unittest
 from . import test_core
 
 test_modules = [
-	test_core
+    test_core
 ]
 
 
 def main():
     package_test_suite = unittest.TestSuite()
     for test_module in test_modules:
-		module_test_suite = unittest.TestLoader().loadTestsFromModule(test_module)
-		package_test_suite.addTest(module_test_suite)
+        module_test_suite = unittest.TestLoader().loadTestsFromModule(test_module)
+        package_test_suite.addTest(module_test_suite)
     runner = unittest.TextTestRunner()
     runner.run(package_test_suite)
 

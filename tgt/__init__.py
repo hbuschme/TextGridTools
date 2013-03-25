@@ -16,12 +16,21 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import sys
+
 from .core import TextGrid
 from .core import Tier, IntervalTier, PointTier
 from .core import Annotation, Interval, Point
 from .core import Time
-from .io import read_textgrid, write_to_file
-from . import agreement, io, util
+
+if sys.version_info < (3, 0):
+	from . import io
+	from .io import read_textgrid, write_to_file
+else:
+	from . import io3 as io
+	from .io3 import read_textgrid, write_to_file
+
+from . import agreement, util
 
 __all__ = [
     'TextGrid',
