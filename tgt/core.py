@@ -321,6 +321,10 @@ class Tier(object):
             return result[:n]  # Return the first n matching intervals
         else:  # i.e., n < 0
             return result[n:]  # Return the last n matching intervals
+
+    def tier_type(self):
+        '''Return the type of the tier as a string.'''
+        return self.__class__.__name__
        
     def __iter__(self):
         return iter(self._objects)
@@ -406,8 +410,13 @@ class PointTier(Tier):
     points = property(fget=_get_points,
                 doc='The list of points of this tier.')
 
+    def tier_type(self):
+        '''Return the type of the tier as a string. 
 
+        As Praat's point tiers are for some reason called "TextTier" in the 
+        TextGrid file format we simply return a string literal here.
         '''
+        return 'TextTier'
 
 
 class Annotation(object):

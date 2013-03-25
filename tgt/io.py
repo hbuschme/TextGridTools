@@ -103,7 +103,7 @@ def read_long_textgrid(filename, stg, include_empty_intervals=False):
     '''Read a Praat long TextGrid file and return a TextGrid object.'''
 
     def get_attr_val(x):
-        """Extract the attribute value from a long TextGrid line."""
+        '''Extract the attribute value from a long TextGrid line.'''
         return x.split(' = ')[1]
 
     def read_interval_tier(stg_extract):
@@ -187,7 +187,7 @@ def export_to_short_textgrid(textgrid):
               len(textgrid)]
     textgrid_corrected = correct_start_end_times_and_fill_gaps(textgrid)
     for tier in textgrid_corrected:
-        result += ['"' + tier.__class__.__name__ + '"',
+        result += ['"' + tier.tier_type + '"',
                    '"' + tier.name + '"',
                    tier.start_time, tier.end_time, len(tier)]
         if isinstance(tier, IntervalTier):
@@ -202,7 +202,7 @@ def export_to_short_textgrid(textgrid):
 
 
 def export_to_long_textgrid(textgrid):
-    """Convert a TextGrid object into a string of Praat long TextGrid format."""
+    '''Convert a TextGrid object into a string of Praat long TextGrid format.'''
     result = ['File type = "ooTextFile"',
               'Object class = "TextGrid"',
               '',
@@ -214,7 +214,7 @@ def export_to_long_textgrid(textgrid):
     textgrid_corrected = correct_start_end_times_and_fill_gaps(textgrid)
     for i, tier in enumerate(textgrid_corrected):
         result += ['\titem [{0}]:'.format(i + 1),
-                   '\t\tclass = "{0}"'.format(tier.__class__.__name__),
+                   '\t\tclass = "{0}"'.format(tier.tier_type),
                    '\t\tname = "{0}"'.format(tier.name),
                    '\t\txmin = ' + unicode(tier.start_time),
                    '\t\txmax = ' + unicode(tier.end_time),
@@ -237,12 +237,12 @@ def export_to_long_textgrid(textgrid):
 
 def export_to_elan(textgrid, encoding='utf-8', include_empty_intervals=False,
                    include_point_tiers=True, point_tier_annotation_duration=0.04):
-    """Convert a TextGrid object into a string of ELAN eaf format."""
+    '''Convert a TextGrid object into a string of ELAN eaf format.'''
 
     time_slots = collections.OrderedDict()
 
     def get_time_slot_id(time, ts_dict=time_slots):
-        """Returns (and possibly creates) the time slot id of time."""
+        '''Returns (and possibly creates) the time slot id of time.'''
         time_in_ms = int(time * 1000)
         if time_in_ms not in ts_dict:
             ts_id = 'ts' + str(len(ts_dict) + 1)
@@ -300,19 +300,19 @@ def export_to_elan(textgrid, encoding='utf-8', include_empty_intervals=False,
 
 
 def export_to_table(textgrid, separator=','):
-    """Convert a TextGrid object into a table with fields delimited
-    with the specified separator (comma by default)."""
+    '''Convert a TextGrid object into a table with fields delimited
+    with the specified separator (comma by default).'''
     result = [separator.join(['tier_name', 'tier_type', 'start_time', 'end_time', 'text'])]
 
     for tier in textgrid:
         if isinstance(tier, IntervalTier):
             for obj in tier:
                 if obj.text:
-                    result.append(separator.join([unicode(tier.name), unicode(tier.__class__.__name__),
+                    result.append(separator.join([unicode(tier.name), unicode(tier.tier_type),
                                                   unicode(obj.start_time), unicode(obj.end_time), obj.text]))
         elif isinstance(tier, PointTier):
             for obj in tier:
-                result.append(separator.join([unicode(tier.name), unicode(tier.__class__.__name__),
+                result.append(separator.join([unicode(tier.name), unicode(tier.tier_type),
                                               unicode(obj.time), unicode(obj.time), obj.text]))
         else:
             raise Exception('Unknown tier type: {0}'.format(tier.name))
@@ -333,7 +333,7 @@ _EXPORT_FORMATS = {
 
 
 def write_to_file(textgrid, filename, format='short', encoding='utf-8', **kwargs):
-    """Write a TextGrid object to a file in the specified format."""
+    '''Write a TextGrid object to a file in the specified format.'''
     with codecs.open(filename, 'w', encoding) as f:
         if format in _EXPORT_FORMATS:
             f.write(_EXPORT_FORMATS[format](textgrid, **kwargs))
