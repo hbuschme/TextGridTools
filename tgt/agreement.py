@@ -131,7 +131,7 @@ def align_labels(tiers_list, precision=None, regex=r'[^\s]+'):
         raise Exception('Input tiers differ in the number of objects.')
 
     labels_aligned = []
-    for intervals in itertools.izip(*[x for x in tiers_list]):
+    for intervals in zip(*[x for x in tiers_list]):
         start_times = [x.start_time for x in intervals]
         end_times = [x.end_time for x in intervals]
         labels = [x.text.strip() for x in intervals]
