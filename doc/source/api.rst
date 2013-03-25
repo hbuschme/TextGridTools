@@ -1,4 +1,4 @@
-Documentation
+API
 =============
 
 .. automodule:: tgt.core
