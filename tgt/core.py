@@ -46,16 +46,16 @@ class TextGrid(object):
                      doc='Tiers in this TextGrid object.')
 
     def add_tier(self, tier):
-        """Add a tier."""
+        '''Add a tier.'''
         self._tiers.append(tier)
 
     def add_tiers(self, tiers):
-        """Add a list of tiers."""
+        '''Add a list of tiers.'''
         for tier in tiers:
             self.add_tier(tier)
 
     def insert_tier(self, tier, position):
-        """Insert a tier at the specified position."""
+        '''Insert a tier at the specified position.'''
         self._tiers.insert(position, tier)
 
     def delete_tier(self, tier_name):
@@ -172,12 +172,12 @@ class Tier(object):
                         repr(obj)))
 
     def add_annotations(self, objects):
-        """Add a sequence of annotation objects."""
+        '''Add a sequence of annotation objects.'''
         for obj in objects:
             self.add_annotation(obj)
 
     def _get_annotations(self):
-        """Get all intervals of this tier."""
+        '''Get all intervals of this tier.'''
         return self._objects
 
     annotations = property(fget=_get_annotations,
@@ -232,7 +232,7 @@ class Tier(object):
 
     def get_nearest_annotation(self, time, pattern=r'.*', boundary='both',
                                direction='both', exclude_overlapped=False):
-        '''Get the annotation object(s) nearest to time.
+        '''Get a set of the annotation object(s) nearest to time.
 
         Boundary specifies whether the distance to an annotation object
         is calculated based on its start time ('start'), end time
@@ -350,62 +350,11 @@ class IntervalTier(Tier):
         self.add_annotations    (intervals)
 
     def _get_intervals(self):
-        """Get all intervals of this tier."""
+        '''Get all intervals of this tier.'''
         return self._objects
 
     intervals = property(fget=_get_intervals,
                 doc='The list of intervals of this tier.')
-
-    def get_interval_by_start_time(self, start_time):
-        '''Get the interval that starts at time.'''
-        self.get_annotation_by_start_time(start_time)
-
-    def get_interval_by_end_time(self, end_time):
-        '''Get the interval that ends at time.'''
-        self.get_annotation_by_end_time(end_time)
-
-    def get_intervals_by_time(self, time):
-        """Get intervals at the specified time."""
-        return self.get_annotations_by_time(time)
-
-    def get_intervals_between_timepoints(self, start, end, left_overlap=False, right_overlap=False):
-        '''Get intervals between start and end.
-
-        If left_overlap or right_overlap is False intervals overlapping
-        with start or end are excluded.
-        '''
-        return self.get_annotations_between_timepoints(start, end, left_overlap, right_overlap)
-
-    def get_nearest_interval(self, time, direction='both', pattern=r'[^\s]+', exclude_overlapped=False):
-        '''Get the interval(s) nearest to time.
-
-        Boundary specifies whether the distance to an interval
-        is calculated based on its start time ('start'), end time
-        ('end') or both ('both'). Direction specifies whether it is
-        looked to the left hand side of time ('left'), to the right
-        hand side of time ('right') or to both sides ('both').
-        Intervals overlapping with time can be excluded.
-
-        Note: When time lies exactly on a boundary, this boundary is
-        both to the left and to the right of time.
-        '''
-        return self.get_nearest_annotation(self, time, direction, pattern, exclude_overlapped)
-
-    def get_intervals_with_regex(self, regex=r'[^\s]+', n=0):
-        '''Get intervals with text matching the regex pattern.
-
-        If n > 0 the first n matches are returned, if n < 0, the last
-        n matches are returned, if n = 0 all matches are returned.
-        '''
-        return self.get_annotations_with_matching_text(regex, n, regex=True)
-
-    def get_intervals_with_text(self, text, n=0):
-        '''Get intervals with text matching the pattern.
-
-        If n > 0 the first n matches are returned, if n < 0, the last
-        n matches are returned, if n = 0 all matches are returned.
-        '''
-        return self.get_annotations_with_matching_text(text, n, regex=False)
 
     def get_copy_with_gaps_filled(self, start_time=None, end_time=None, empty_string=''):
         '''Returns a copy where gaps are filled with empty intervals.'''
@@ -443,48 +392,22 @@ class PointTier(Tier):
             name, objects)
 
     def add_point(self, point):
-        """Add a point to this tier."""
+        '''Add a point to this tier.'''
         self.add_annotation(point)
 
     def add_points(self, points):
-        """Adds a list of points to this tier."""
+        '''Adds a list of points to this tier.'''
         self.add_annotations(points)
 
     def _get_points(self):
-        """Get all points of this tier."""
+        '''Get all points of this tier.'''
         return self._objects
 
     points = property(fget=_get_points,
                 doc='The list of points of this tier.')
 
-    def get_point_at_time(self, time):
-        '''Get the point at time.'''
-        return self.get_annotation_by_start_time(time)
 
-    def get_points_between_timepoints(self, start, end, left_inclusive=False, right_inclusive=False):
-        '''Get points between start and end.
-
-        If left_overlap or right_overlap is False points overlapping
-        with start or end are excluded.
         '''
-        return self.get_annotations_between_timepoints(start, end,
-            left_inclusive, right_inclusive)
-
-    def get_points_with_regex(self, regex=r'[^\s]+', n=0):
-        '''Get points with text matching the regex pattern.
-
-        If n > 0 the first n matches are returned, if n < 0, the last
-        n matches are returned, if n = 0 all matches are returned.
-        '''
-        return self.get_annotations_with_matching_text(regex, n, regex=True)
-
-    def get_points_with_text(self, text, n=0):
-        '''Get points with text matching the pattern.
-
-        If n > 0 the first n matches are returned, if n < 0, the last
-        n matches are returned, if n = 0 all matches are returned.
-        '''
-        return self.get_annotations_with_matching_text(text, n, regex=False)
 
 
 class Annotation(object):
@@ -521,7 +444,7 @@ class Annotation(object):
         doc='The end time.')
 
     def duration(self):
-        """Get duration of this annotation."""
+        '''Get duration of this annotation.'''
         return self.end_time - self.start_time
 
     def __eq__(self, other):
