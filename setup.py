@@ -21,8 +21,8 @@ from distutils.core import setup
 
 setup(
     name='tgt',
-    description='TextGridTools – Read, write, and manipulate Praat TextGrid files',
-    version='0.9',
+    description='TextGridTools -- Read, write, and manipulate Praat TextGrid files',
+    version='1.0',
     packages=['tgt'],
     scripts=[
     	'scripts/tgt-concatenate-textgrids.py',
