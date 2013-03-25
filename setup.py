@@ -20,11 +20,24 @@
 from distutils.core import setup
 
 setup(
-    name='TextGridTools',
-    description='Read, write, and manipulate Praat TextGrid files',
+    name='tgt',
+    description='TextGridTools – Read, write, and manipulate Praat TextGrid files',
     version='0.9',
-    author='Hendrik Buschmeier',
     packages=['tgt'],
+    scripts=[
+    	'scripts/tgt-concatenate-textgrids.py',
+    	'scripts/tgt-print-tiernames.py',
+    ],
+    maintainer='Hendrik Buschmeier',
+    maintainer_email='hbuschme@uni-bielefeld.de',
     license='GNU General Public License 3',
-    download_url='http://github.com/hbuschme/TextGridTools/'
+    download_url='http://github.com/hbuschme/TextGridTools/',
+    classifiers=[
+    	'Development Status :: 4 - Beta',
+    	'Intended Audience :: Science/Research',
+    	'License :: OSI Approved :: GNU General Public License v3 or later (GPLv3+)',
+    	'Programming Language :: Python',
+    	'Programming Language :: Python :: 2.7',
+    	'Topic :: Scientific/Engineering :: Information Analysis',
+    ],
 )
