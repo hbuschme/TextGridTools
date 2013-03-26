@@ -10,8 +10,20 @@ These limitations are particularly evident when Praat script is used to manipula
 
 To overcome these shortcomings, we have developed 'TextGridTools,' a Python package offering functions to parse, manipulate and query Praat annotations. TextGridTools implements all of TextGrid-related objects, such as interval and point tiers, as native Python classes and offers a clean API for accessing their attributes. Additional functions are available to perform more complex operations, such as calculation of inter-annotator agreement measures between several annotation tiers.
 
-Coupled with Python's expressive syntax, TextGridTools allows for more compact and human-readable program code than that of Praat script. Additionally, with access to a fully-fledged programming language, users are able to carry out their analyses in one step, without Praat script serving as a mere exporting tool. Using TextGridTools annotations can be accessed directly from a Python program and processed using one of Python's many data analysis libraries (e.g., `NumPy <http://www.numpy.org>`_, `SciPy <http://www.scipy.org>`_, `Matplotlib <http://www.matplotlib.org>`_, `RPy <http://www.rpy.sourceforge.net>`_ or `pandas <http://www.pandas.pydata.org/>`_, cf. [McKinney]_).
+Coupled with Python's expressive syntax, TextGridTools allows for more compact and human-readable program code than that of Praat script. Additionally, with access to a fully-fledged programming language, users are able to carry out their analyses in one step, without Praat script serving as a mere exporting tool. Using TextGridTools annotations can be accessed directly from a Python program and processed using one of Python's many data analysis libraries (e.g., `NumPy <http://www.numpy.org>`_, `SciPy <http://www.scipy.org>`_, `Matplotlib <http://www.matplotlib.org>`_, `RPy <http://www.rpy.sourceforge.net>`_ or `pandas <http://www.pandas.pydata.org/>`_, cf. [#]_).
 
-TextGridTools are released under the GNU General Public Licence v3.0, and hosted on `GitHub <https://github.com/hbuschme/TextGridTools>`_ allowing users to contribute their changes and extend the existing functionality.
+TextGridTools is released under the GNU General Public Licence v3.0, and hosted on `GitHub <https://github.com/hbuschme/TextGridTools>`_ allowing users to contribute their changes and extend the existing functionality.  TextGridTools is compatible with both Python 2 and Python 3.
 
-.. [McKinney] McKinney, W. *Python for Data Analysis: Agile Tools for Real World Data*. O’Reilly, Sebastopol, CA, 2012.
+For a longer overview as well as for citing TextGridTools,  see [#]_ (`PDF <http://pub.uni-bielefeld.de/download/2561620/2563287>`_).
+
+Installing
+----------
+
+TextGridTools is part of the `Python Package Index <https://pypi.python.org/pypi/tgt/1.0>`_ repository . To get the latest stable version run ``pip install tgt``.
+
+To get the latest development version, use the GitHub repository: ``git clone https://github.com/hbuschme/TextGridTools.git``.
+
+
+.. [#] McKinney, W. (2012). *Python for Data Analysis: Agile Tools for Real World Data*. Sebastopol, CA: O'Reilly.
+
+.. [#] Buschmeier, H. and Włodarczak, M. (2013). TextGridTools: A TextGrid Processing and Analysis Toolkit for Python. In P. Wagner (ed.) *Tagungsband der 24. Konferenz zur Elektronischen Sprachsignalverarbeitung (ESSV 2013)*. Dresden: TUDpress, pp. 152-157.
