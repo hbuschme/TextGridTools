@@ -16,8 +16,8 @@ TextGridTools is released under the GNU General Public Licence v3.0, and hosted 
 
 For a longer overview as well as for citing TextGridTools,  see [#]_ (`PDF <http://pub.uni-bielefeld.de/download/2561620/2563287>`_).
 
-Installing
-----------
+Installation
+------------
 
 TextGridTools is part of the `Python Package Index <https://pypi.python.org/pypi/tgt/1.0>`_ repository . To get the latest stable version run ``pip install tgt``.
 

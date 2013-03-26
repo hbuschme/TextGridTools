@@ -41,7 +41,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = u'TextGridTools'
-copyright = u'2012, Hendrik Buschmeier, Marcin Włodarczak'
+copyright = u'2011-2013, Hendrik Buschmeier, Marcin Włodarczak'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
