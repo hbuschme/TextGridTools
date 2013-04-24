@@ -187,7 +187,7 @@ def export_to_short_textgrid(textgrid):
               len(textgrid)]
     textgrid_corrected = correct_start_end_times_and_fill_gaps(textgrid)
     for tier in textgrid_corrected:
-        result += ['"' + tier.tier_type + '"',
+        result += ['"' + tier.tier_type() + '"',
                    '"' + tier.name + '"',
                    tier.start_time, tier.end_time, len(tier)]
         if isinstance(tier, IntervalTier):
