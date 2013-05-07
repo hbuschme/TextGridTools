@@ -214,7 +214,7 @@ def export_to_long_textgrid(textgrid):
     textgrid_corrected = correct_start_end_times_and_fill_gaps(textgrid)
     for i, tier in enumerate(textgrid_corrected):
         result += ['\titem [{0}]:'.format(i + 1),
-                   '\t\tclass = "{0}"'.format(tier.tier_type),
+                   '\t\tclass = "{0}"'.format(tier.tier_type()),
                    '\t\tname = "{0}"'.format(tier.name),
                    '\t\txmin = ' + unicode(tier.start_time),
                    '\t\txmax = ' + unicode(tier.end_time),
@@ -308,11 +308,11 @@ def export_to_table(textgrid, separator=','):
         if isinstance(tier, IntervalTier):
             for obj in tier:
                 if obj.text:
-                    result.append(separator.join([unicode(tier.name), unicode(tier.tier_type),
+                    result.append(separator.join([unicode(tier.name), unicode(tier.tier_type()),
                                                   unicode(obj.start_time), unicode(obj.end_time), obj.text]))
         elif isinstance(tier, PointTier):
             for obj in tier:
-                result.append(separator.join([unicode(tier.name), unicode(tier.tier_type),
+                result.append(separator.join([unicode(tier.name), unicode(tier.tier_type()),
                                               unicode(obj.time), unicode(obj.time), obj.text]))
         else:
             raise Exception('Unknown tier type: {0}'.format(tier.name))
