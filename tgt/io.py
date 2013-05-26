@@ -228,7 +228,7 @@ def export_to_long_textgrid(textgrid):
         elif isinstance(tier, PointTier):
             for j, obj in enumerate(tier):
                 result += ['\t\tpoints [{0}]:'.format(j + 1),
-                           '\t\t\tnumber = ' + obj.time,
+                           '\t\t\tnumber = ' + unicode(obj.time),
                            '\t\t\tmark = "' + obj.text + '"']
         else:
             raise Exception('Unknown tier type: {0}'.format(tier.name))
