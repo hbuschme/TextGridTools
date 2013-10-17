@@ -27,7 +27,11 @@ from .core import TextGrid, IntervalTier, Interval, PointTier, Point, Time
 
 
 def read_textgrid(filename, encoding='utf-8', include_empty_intervals=False):
-    '''Read a Praat TextGrid file and returns a TextGrid object.'''
+    '''Read a Praat TextGrid file and return a TextGrid object. 
+    If include_empty_intervals is False (the default), empty intervals
+    are excluded. If True, they are included. Empty intervals from specific
+    tiers can be also included by specifying tier names as a string (for one tier)
+    or as a list.'''
     with codecs.open(filename, 'r', encoding) as f:
         # Read whole file into memory ignoring empty lines and lines consisting
         # solely of a single double quotes.
