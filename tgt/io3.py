@@ -22,7 +22,11 @@ from .core import TextGrid, IntervalTier, Interval, PointTier, Point, Time
 
 
 def read_textgrid(filename, encoding='utf-8', include_empty_intervals=False):
-    '''Read a Praat TextGrid file and returns a TextGrid object.'''
+    '''Read a Praat TextGrid file and return a TextGrid object. 
+    If include_empty_intervals is False (the default), empty intervals
+    are excluded. If True, they are included. Empty intervals from specific
+    tiers can be also included by specifying tier names as a string (for one tier)
+    or as a list.'''
     with open(filename, 'rt', encoding=encoding) as f:
         # Read whole file into memory ignoring empty lines and lines consisting
         # solely of a single double quotes.
@@ -47,11 +51,12 @@ def read_short_textgrid(filename, stg, include_empty_intervals=False):
         name = stg_extract[1].strip('"')  # name w/o quotes
         start_time = Time(stg_extract[2])
         end_time = Time(stg_extract[3])
+        include_empty_intervals_this_tier = include_empty_intervals_in_tier(name, include_empty_intervals)
         it = IntervalTier(start_time, end_time, name)
         i = 5
         while i < len(stg_extract):
             text = stg_extract[i + 2].strip('"') # text w/o quotes
-            if include_empty_intervals or text.strip() != '':
+            if text.strip() != '' or include_empty_intervals_this_tier:
                 it.add_annotation(Interval(
                     Time(stg_extract[i]), # left bound
                     Time(stg_extract[i + 1]), # right bound
@@ -106,11 +111,12 @@ def read_long_textgrid(filename, stg, include_empty_intervals=False):
         name = get_attr_val(stg_extract[2])[1:-1]  # name w/o quotes
         start_time = get_attr_val(stg_extract[3])
         end_time = get_attr_val(stg_extract[4])
+        include_empty_intervals_this_tier = include_empty_intervals_in_tier(name, include_empty_intervals)
         it = IntervalTier(start_time, end_time, name)
         i = 7
         while i < len(stg_extract):
             text = get_attr_val(stg_extract[i + 2])[1:-1] # text w/o quotes
-            if include_empty_intervals or text.strip() != '':
+            if text.strip() != '' or include_empty_intervals_this_tier:
                 it.add_annotation(Interval(
                     Time(get_attr_val(stg_extract[i])), # left bound
                     Time(get_attr_val(stg_extract[i + 1])), # right bound
@@ -152,6 +158,16 @@ def read_long_textgrid(filename, stg, include_empty_intervals=False):
             raise Exception('Unknown tier type: {0}'.format(stg[index]))
     return tg
 
+def include_empty_intervals_in_tier(tier_name, include_empty_intervals):
+    """Check whether to include empty intervals for a particular tier"""
+    if isinstance(include_empty_intervals, bool):
+        return include_empty_intervals
+    elif isinstance(include_empty_intervals, str):
+        return tier_name == include_empty_intervals
+    elif isinstance(include_empty_intervals, list):
+        return tier_name in include_empty_intervals
+    else:
+        raise TypeError('Invalid type of include_empty_intervals: {0}.'.format(type(include_empty_intervals)))
 
 ##  Functions for writing TextGrid files
 ##----------------------------------------------------------------------------
