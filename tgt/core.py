@@ -233,7 +233,7 @@ class Tier(object):
 
     def get_nearest_annotation(self, time, pattern=r'.*', boundary='both',
                                direction='both', exclude_overlapped=False):
-        '''Get a set of the annotation object(s) nearest to time.
+        '''Get a list of the annotation object(s) nearest to time.
 
         Boundary specifies whether the distance to an annotation object
         is calculated based on its start time ('start'), end time
@@ -301,9 +301,9 @@ class Tier(object):
                         results.add(self.get_annotation_by_start_time(candidate[0]))
                     elif candidate[2] == 'end':
                         results.add(self.get_annotation_by_end_time(candidate[0]))
-            return results
+            return sorted(list(results), key=lambda x: x.start_time)
         else:
-            return set()
+            return list()
 
     def get_annotations_with_text(self, pattern='', n=0, regex=False):
         '''Get annotation objects with text matching the pattern.
