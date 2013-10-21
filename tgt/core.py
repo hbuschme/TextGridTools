@@ -20,6 +20,7 @@ from __future__ import division
 
 import bisect
 import collections
+import warnings
 import copy
 import math
 import operator
@@ -304,7 +305,7 @@ class Tier(object):
         else:
             return set()
 
-    def get_annotations_with_matching_text(self, pattern='', n=0, regex=False):
+    def get_annotations_with_text(self, pattern='', n=0, regex=False):
         '''Get annotation objects with text matching the pattern.
 
         If n > 0 the first n matches are returned, if n < 0, the last
@@ -322,6 +323,20 @@ class Tier(object):
         else:  # i.e., n < 0
             return result[n:]  # Return the last n matching intervals
 
+    def get_annotations_with_matching_text(self, pattern='', n=0, regex=False):
+        '''Get annotation objects with text matching the pattern.
+
+        If n > 0 the first n matches are returned, if n < 0, the last
+        n matches are returned, if n = 0 all matches are returned. The 
+        pattern is treated as a regular expression, if regex is True.
+
+        Note: get_annotations_with_matching_text is deprecated. Use
+        get_annotations_with_text instead.
+        '''
+        warnings.warn('get_annotations_with_matching_text is deprecated. '\
+                      'Use get_annotations_with_text instead.',DeprecationWarning)
+        return self.get_annotations_with_text(pattern, n, regex)
+            
     def tier_type(self):
         '''Return the type of the tier as a string.'''
         return self.__class__.__name__
