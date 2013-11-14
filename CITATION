@@ -1,0 +1,15 @@
+To cite TextGridTools in publications, please use:
+
+Buschmeier, H. & Włodarczak, M. (2013). TextGridTools: A TextGrid processing and analysis toolkit for Python. In Proceedings der 24. Konferenz zur Elektronischen Sprachsignalverarbeitung, pp. 152–157, Bielefeld, Germany.
+
+A BibTeX entry for LaTeX users is
+
+@inproceedings{TextGridTools,
+	Address = {Bielefeld, Germany},
+	Author = {Buschmeier, Hendrik and W{\l}odarczak, Marcin},
+	Booktitle = {Proceedings der 24. Konferenz zur elektronischen Sprachsignalverarbeitung},
+	Pages = {152--157},
+	Title = {{TextGridTools}: {A TextGrid} Processing and Analysis Toolkit for {Python}},
+	URN = {urn:nbn:de:0070-pub-25616204},
+	Year = {2013}
+}
