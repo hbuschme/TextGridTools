@@ -20,6 +20,7 @@ from __future__ import division
 
 import re
 import collections
+import copy
 
 from .core import TextGrid, IntervalTier, Interval
 
@@ -159,3 +160,107 @@ def merge_textgrids(textgrids, ignore_duplicates=True):
                     continue
             tg_merged.add_tier(tier_copy)
     return tg_merged
+
+## Chronogram
+## ---------------------------------------------------------------------------
+
+SINGLE_STATES = ['self', 'other']
+JOINT_STATES = ['both', 'none']
+
+def chronogram(tier_a, tier_b, speech_label=r'[^\s]+', silence_label=r'^\s*$'):
+    """Construct a chronogram given two input tiers. Interval labels are
+    classified as silences or volcalisations by matching them against
+    the speech_label and the silence_label regular expressions. By
+    default all intervals with empty or whitespace-only labels are
+    treated as silences.
+
+    The code implements Jaffe and Feldstein's (1970) 6-state Markov
+    model. Instances of silences and overlaps are classified as
+    within-speaker-overlap (wso), between-speaker-overlap (bso),
+    within-speaker-silence (wss) or between-speaker-silence (bss).
+    Individual vocalistions are labelled with the the source tier
+    name."""
+    
+    # Fill all gaps with empty intervals
+    tier_a_nogaps = tier_a.get_copy_with_gaps_filled()
+    tier_b_nogaps = tier_b.get_copy_with_gaps_filled()
+
+    
+    # Calculate communicative states: self, other, none or both.
+    communicative_states = communicative_state_classification(tier_a_nogaps, tier_b_nogaps,
+                                                              speech_label, silence_label)
+    assert len(communicative_states['a']) == len(communicative_states['b'])
+
+    sil_ov_class = []
+    prev_single = None
+
+    for i in range(len(communicative_states['a'])):
+
+        cur_start = communicative_states['a'][i]['start']
+        cur_end = communicative_states['a'][i]['end']
+        cur_state = communicative_states['a'][i]['communicative_state']
+
+        # Make sure there are no consecutive same states
+        # if i > 0:
+            # assert a[i - 1]['communicative_state'] != cur_state, 'Consecutive joint states: {0}'.format(a[i])
+
+        if cur_state in JOINT_STATES:
+
+            # If we have not seen a single-speaker vocalisation yet
+            # or if it is the last segment in the file, skip it.
+            if  prev_single is None or i == len(communicative_states['a']) - 1:
+                continue
+
+            next_state = communicative_states['b'][i + 1]['communicative_state']
+            
+            # Transitions between joint states do not result in speaker change.
+            # The same is true for transitions from a joint state to a single state 
+            # equal to the previous single state.
+            if ((next_state in SINGLE_STATES and prev_single == next_state) 
+                or next_state in JOINT_STATES):
+                sil_ov_class.append({'start': cur_start, 'end': cur_end,
+                                     'text': 'wso' if cur_state == 'both' else 'wss'})
+            else:
+                sil_ov_class.append({'start': cur_start, 'end': cur_end,
+                                     'text': 'bso' if cur_state == 'both' else 'bss'})
+
+        # Label single vocalisations with the source tier name.
+        elif cur_state in SINGLE_STATES:
+            sil_ov_class.append({'start': cur_start, 'end': cur_end,
+                                 'text': tier_a.name if cur_state == 'self' else tier_b.name})
+            prev_single = cur_state
+        else:
+            raise Exception('Unknown cummunicative state: {0}'.format(cur_state))
+
+    return sil_ov_class
+
+def communicative_state_labels(a, b, speech_label, silence_label):
+    """Apply 'self', 'other', 'none' or 'both' labels."""
+    if re.search(silence_label, a) and re.search(silence_label, b):
+        return 'none', 'none'
+    elif re.search(speech_label, a) and re.search(speech_label, b):
+        return 'both', 'both'
+    elif re.search(speech_label, a):
+        return 'self', 'other'
+    else:
+        return 'other', 'self'
+
+def communicative_state_classification(tier_a, tier_b, speech_label, silence_label):
+    """Calculate boundaries of overlapping intervals in each of the tiers
+    and classify them as 'self', 'none' or 'both'."""
+
+    communicative_state = {'a':[], 'b':[]}
+
+    i = j = 0
+    while i < len(tier_a) and j < len(tier_b):
+        lo, hi = max(tier_a[i].start_time, tier_b[j].start_time), min(tier_a[i].end_time, tier_b[j].end_time)
+
+        if lo < hi:
+            labels = communicative_state_labels(tier_a[i].text, tier_b[j].text, speech_label, silence_label)
+            communicative_state['a'].append({'start':lo, 'end':hi, 'communicative_state':labels[0]})
+            communicative_state['b'].append({'start':lo, 'end':hi, 'communicative_state':labels[1]})
+        if tier_a[i].end_time < tier_b[j].end_time:
+            i += 1
+        else:
+            j += 1
+    return communicative_state
