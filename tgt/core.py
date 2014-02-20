@@ -344,6 +344,9 @@ class Tier(object):
     def __iter__(self):
         return iter(self._objects)
 
+    def __getitem__(self, key):
+        return self._objects[key]
+
     def __len__(self):
         '''Return number of annotation objects in this tier.'''
         return len(self._objects)
