@@ -19,7 +19,6 @@
 from __future__ import division
 
 import bisect
-import collections
 import warnings
 import copy
 import math

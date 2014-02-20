@@ -19,6 +19,7 @@
 from __future__ import division
 
 import re
+import collections
 
 from .core import TextGrid, IntervalTier, Interval
 
