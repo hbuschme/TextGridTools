@@ -179,7 +179,7 @@ def chronogram(tier_a, tier_b, speech_label=r'[^\s]+', silence_label=r'^\s*$'):
     Individual vocalistions are labelled with the the source tier
     name."""
     
-    # Fill all gaps with empty intervals and ensure they have
+    # Fill all gaps with empty intervals and ensure the tiers have
     # identical start and end times
     start_time_earliest = min(tier_a.start_time, tier_b.start_time)
     end_time_latest = max(tier_a.end_time, tier_b.end_time)
@@ -188,7 +188,7 @@ def chronogram(tier_a, tier_b, speech_label=r'[^\s]+', silence_label=r'^\s*$'):
     tier_b_nogaps = tier_b.get_copy_with_gaps_filled(start_time=start_time_earliest,
                                                      end_time=end_time_latest)
 
-    # Calculate communicative states: self, other, none or both.
+    # Calculate communicatfive states (self, other, none or both) for each tier.
     communicative_states = communicative_state_classification(tier_a_nogaps, tier_b_nogaps,
                                                               speech_label, silence_label)
     
@@ -206,7 +206,8 @@ def chronogram(tier_a, tier_b, speech_label=r'[^\s]+', silence_label=r'^\s*$'):
 
         # Make sure there are no consecutive same states
         # if i > 0:
-            # assert a[i - 1]['communicative_state'] != cur_state, 'Consecutive joint states: {0}'.format(a[i])
+            # assert a[i - 1]['communicative_state'] != cur_state,\
+                # 'Consecutive joint states: {0}'.format(a[i])
 
         if cur_state in JOINT_STATES:
 
