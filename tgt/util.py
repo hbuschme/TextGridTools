@@ -244,10 +244,12 @@ def communicative_state_labels(a, b, speech_label, silence_label):
         return 'none', 'none'
     elif re.search(speech_label, a) and re.search(speech_label, b):
         return 'both', 'both'
-    elif re.search(speech_label, a):
+    elif re.search(speech_label, a) and re.search(silence_label, b):
         return 'self', 'other'
-    else:
+    elif re.search(silence_label, a) and re.search(speech_label, b):
         return 'other', 'self'
+    else:
+        raise Exception('Unknown speech/silence labels: {0}, {1}'.format(a, b))
 
 def communicative_state_classification(tier_a, tier_b, speech_label, silence_label):
     """Calculate boundaries of overlapping intervals in each of the tiers
