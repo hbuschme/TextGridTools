@@ -202,7 +202,7 @@ def chronogram(tier_a, tier_b, speech_label=r'[^\s]+', silence_label=r'^\s*$'):
 
         cur_start = communicative_states['a'][i]['start']
         cur_end = communicative_states['a'][i]['end']
-        cur_state = communicative_states['a'][i]['communicative_state']
+        cur_state = communicative_states['a'][i]['state']
 
         # Make sure there are no consecutive same states
         # if i > 0:
@@ -216,7 +216,7 @@ def chronogram(tier_a, tier_b, speech_label=r'[^\s]+', silence_label=r'^\s*$'):
             if  prev_single is None or i == len(communicative_states['a']) - 1:
                 continue
 
-            next_state = communicative_states['a'][i + 1]['communicative_state']
+            next_state = communicative_states['a'][i + 1]['state']
             
             # Transitions between joint states do not result in speaker change.
             # The same is true for transitions from a joint state to a single state 
@@ -264,8 +264,8 @@ def communicative_state_classification(tier_a, tier_b, speech_label, silence_lab
 
         if lo < hi:
             labels = communicative_state_labels(tier_a[i].text, tier_b[j].text, speech_label, silence_label)
-            communicative_state['a'].append({'start':lo, 'end':hi, 'communicative_state':labels[0]})
-            communicative_state['b'].append({'start':lo, 'end':hi, 'communicative_state':labels[1]})
+            communicative_state['a'].append({'start':lo, 'end':hi, 'state':labels[0]})
+            communicative_state['b'].append({'start':lo, 'end':hi, 'state':labels[1]})
         if tier_a[i].end_time < tier_b[j].end_time:
             i += 1
         else:
