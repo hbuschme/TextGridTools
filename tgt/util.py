@@ -197,6 +197,7 @@ def chronogram(tier_a, tier_b, speech_label=r'[^\s]+', silence_label=r'^\s*$'):
 
     res = IntervalTier(name='chronogram-{0}-{1}'.format(tier_a.name, tier_b.name))
     prev_single = None
+    prev_joint = []
 
     for i in range(len(communicative_states['a'])):
 
@@ -211,9 +212,8 @@ def chronogram(tier_a, tier_b, speech_label=r'[^\s]+', silence_label=r'^\s*$'):
 
         if cur_state in JOINT_STATES:
 
-            # If we have not seen a single-speaker vocalisation yet
-            # or if it is the last segment in the file, skip it.
-            if  prev_single is None or i == len(communicative_states['a']) - 1:
+            # If we have not seen a single-speaker vocalisation, skip it.
+            if  prev_single is None:
                 continue
 
             next_state = communicative_states['a'][i + 1]['state']
@@ -223,13 +223,18 @@ def chronogram(tier_a, tier_b, speech_label=r'[^\s]+', silence_label=r'^\s*$'):
             # equal to the previous single state.
             if ((next_state in SINGLE_STATES and prev_single == next_state) 
                 or next_state in JOINT_STATES):
-                res.add_interval(Interval(start_time=cur_start, end_time=cur_end,
-                                          text='wso' if cur_state == 'both' else 'wss'))
+                prev_joint.append(Interval(start_time=cur_start, end_time=cur_end,
+                                           text='wso' if cur_state == 'both' else 'wss'))
             else:
-                res.add_interval(Interval(start_time=cur_start, end_time=cur_end,
-                                          text='bso' if cur_state == 'both' else 'bss'))
+                prev_joint.append(Interval(start_time=cur_start, end_time=cur_end,
+                                           text='bso' if cur_state == 'both' else 'bss'))
         # Label single vocalisations with the source tier name.
         elif cur_state in SINGLE_STATES:
+            # We only add past joint states, if there is a following single state.
+            # This ensures we get no joint states at the end of the file.
+            if prev_joint:
+                res.add_intervals(prev_joint)
+                prev_joint = []
             res.add_interval(Interval(start_time=cur_start, end_time=cur_end,
                                       text=tier_a.name if cur_state == 'self' else tier_b.name))
             prev_single = cur_state
