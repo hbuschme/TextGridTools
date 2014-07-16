@@ -404,6 +404,26 @@ class IntervalTier(Tier):
                     tier_copy.add_annotation(empty)
         return tier_copy
 
+    def get_copy_with_same_intervals_merged(self):
+        '''Returns a copy of TIER in which consecutive intervals
+        with identical labels are merged.'''
+
+        res = IntervalTier(name=self.name)
+        prev_intr = None
+
+        for intr in self:
+            if prev_intr is None:
+                prev_intr = copy.copy(intr)
+            elif prev_intr.text != intr.text or prev_intr.end_time != intr.start_time:
+                res.add_interval(prev_intr)
+                prev_intr = copy.copy(intr)
+            else:
+                prev_intr.end_time = intr.end_time
+        else:
+            if prev_intr is not None:
+                res.add_interval(prev_intr)
+        return res
+
 
 class PointTier(Tier):
     '''A PointTier (also "TextTier").'''
