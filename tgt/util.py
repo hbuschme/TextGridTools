@@ -190,7 +190,7 @@ def chronogram(tier_a, tier_b, speech_label=r'[^\s]+', silence_label=r'^\s*$'):
 
     res = IntervalTier(name='chronogram-{0}-{1}'.format(tier_a.name, tier_b.name))
     prev_single = None
-    prev_joint = []
+    # prev_joint = []
 
     for i in range(len(communicative_states['a'])):
 
@@ -200,8 +200,8 @@ def chronogram(tier_a, tier_b, speech_label=r'[^\s]+', silence_label=r'^\s*$'):
 
         # Make sure there are no consecutive same states
         # if i > 0:
-            # assert a[i - 1]['communicative_state'] != cur_state,\
-                # 'Consecutive joint states: {0}'.format(a[i])
+            # assert communicative_states['a'][i - 1].text != cur_state,\
+                # 'Consecutive joint states: {0}'.format(cur_start)
 
         if cur_state in JOINT_STATES:
 
@@ -209,25 +209,23 @@ def chronogram(tier_a, tier_b, speech_label=r'[^\s]+', silence_label=r'^\s*$'):
             if  prev_single is None:
                 continue
 
-            next_state = communicative_states['a'][i + 1]['state']
+            try:
+                next_state = communicative_states['a'][i + 1].text
+            except IndexError:
+                next_state = None
             
             # Transitions between joint states do not result in speaker change.
             # The same is true for transitions from a joint state to a single state 
-            # equal to the previous single state.
+            # equal to the previous single state and for file-final joint states..
             if ((next_state in SINGLE_STATES and prev_single == next_state) 
-                or next_state in JOINT_STATES):
-                prev_joint.append(Interval(start_time=cur_start, end_time=cur_end,
+                or next_state in JOINT_STATES or next_state is None):
+                res.add_interval(Interval(start_time=cur_start, end_time=cur_end,
                                            text='wso' if cur_state == 'both' else 'wss'))
             else:
-                prev_joint.append(Interval(start_time=cur_start, end_time=cur_end,
+                res.add_interval(Interval(start_time=cur_start, end_time=cur_end,
                                            text='bso' if cur_state == 'both' else 'bss'))
         # Label single vocalisations with the source tier name.
         elif cur_state in SINGLE_STATES:
-            # We only add past joint states, if there is a following single state.
-            # This ensures we get no joint states at the end of the file.
-            if prev_joint:
-                res.add_intervals(prev_joint)
-                prev_joint = []
             res.add_interval(Interval(start_time=cur_start, end_time=cur_end,
                                       text=tier_a.name if cur_state == 'self' else tier_b.name))
             prev_single = cur_state
@@ -261,7 +259,6 @@ def communicative_state_classification(tier_a, tier_b, speech_label, silence_lab
                                                      end_time=end_time_latest)
     tier_b_filled = tier_b.get_copy_with_gaps_filled(start_time=start_time_earliest,
                                                      end_time=end_time_latest)
-    
 
     communicative_state = {'a': IntervalTier(name='communicative_states_a'),
                            'b': IntervalTier(name='communicative_states_b')}
@@ -282,4 +279,12 @@ def communicative_state_classification(tier_a, tier_b, speech_label, silence_lab
             i += 1
         else:
             j += 1
+
+    # Merge consecutive intervals with indentical labels
+    communicative_state = {k: v.get_copy_with_same_intervals_merged()
+                           for k, v in communicative_state.iteritems()}
+
     return communicative_state
+
+
+
