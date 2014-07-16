@@ -179,17 +179,10 @@ def chronogram(tier_a, tier_b, speech_label=r'[^\s]+', silence_label=r'^\s*$'):
     Individual vocalistions are labelled with the the source tier
     name."""
     
-    # Fill all gaps with empty intervals and ensure the tiers have
-    # identical start and end times
-    start_time_earliest = min(tier_a.start_time, tier_b.start_time)
-    end_time_latest = max(tier_a.end_time, tier_b.end_time)
-    tier_a_nogaps = tier_a.get_copy_with_gaps_filled(start_time=start_time_earliest,
-                                                     end_time=end_time_latest)
-    tier_b_nogaps = tier_b.get_copy_with_gaps_filled(start_time=start_time_earliest,
-                                                     end_time=end_time_latest)
+    
 
     # Calculate communicatfive states (self, other, none or both) for each tier.
-    communicative_states = communicative_state_classification(tier_a_nogaps, tier_b_nogaps,
+    communicative_states = communicative_state_classification(tier_a, tier_b,
                                                               speech_label, silence_label)
     
     SINGLE_STATES = ['self', 'other']
@@ -201,9 +194,9 @@ def chronogram(tier_a, tier_b, speech_label=r'[^\s]+', silence_label=r'^\s*$'):
 
     for i in range(len(communicative_states['a'])):
 
-        cur_start = communicative_states['a'][i]['start']
-        cur_end = communicative_states['a'][i]['end']
-        cur_state = communicative_states['a'][i]['state']
+        cur_start = communicative_states['a'][i].start_time
+        cur_end = communicative_states['a'][i].end_time
+        cur_state = communicative_states['a'][i].text
 
         # Make sure there are no consecutive same states
         # if i > 0:
@@ -260,18 +253,32 @@ def communicative_state_classification(tier_a, tier_b, speech_label, silence_lab
     """Calculate boundaries of overlapping intervals in each of the tiers
     and classify them as 'self', 'other', 'none' or 'both'."""
 
-    communicative_state = {'a':[], 'b':[]}
+    # Fill all gaps with empty intervals and ensure the tiers have
+    # identical start and end times
+    start_time_earliest = min(tier_a.start_time, tier_b.start_time)
+    end_time_latest = max(tier_a.end_time, tier_b.end_time)
+    tier_a_filled = tier_a.get_copy_with_gaps_filled(start_time=start_time_earliest,
+                                                     end_time=end_time_latest)
+    tier_b_filled = tier_b.get_copy_with_gaps_filled(start_time=start_time_earliest,
+                                                     end_time=end_time_latest)
+    
+
+    communicative_state = {'a': IntervalTier(name='communicative_states_a'),
+                           'b': IntervalTier(name='communicative_states_b')}
 
     i = j = 0
-    while i < len(tier_a) and j < len(tier_b):
-        lo = max(tier_a[i].start_time, tier_b[j].start_time)
-        hi = min(tier_a[i].end_time, tier_b[j].end_time)
+    while i < len(tier_a_filled) and j < len(tier_b_filled):
+        lo = max(tier_a_filled[i].start_time, tier_b_filled[j].start_time)
+        hi = min(tier_a_filled[i].end_time, tier_b_filled[j].end_time)
 
         if lo < hi:
-            labels = communicative_state_labels(tier_a[i].text, tier_b[j].text, speech_label, silence_label)
-            communicative_state['a'].append({'start':lo, 'end':hi, 'state':labels[0]})
-            communicative_state['b'].append({'start':lo, 'end':hi, 'state':labels[1]})
-        if tier_a[i].end_time < tier_b[j].end_time:
+            labels = communicative_state_labels(tier_a_filled[i].text,
+                                                tier_b_filled[j].text,
+                                                speech_label,silence_label)
+
+            communicative_state['a'].add_interval(Interval(lo, hi, labels[0]))
+            communicative_state['b'].add_interval(Interval(lo, hi, labels[1]))
+        if tier_a_filled[i].end_time < tier_b_filled[j].end_time:
             i += 1
         else:
             j += 1
