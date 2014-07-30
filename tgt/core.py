@@ -183,37 +183,37 @@ class Tier(object):
     annotations = property(fget=_get_annotations,
                 doc='The list of annotations of this tier.')
 
-    def get_annotation_by_start_time(self, time):
-        '''Get the annotation object that starts at time.'''
+    def _get_annotation_index_by_start_time(self, time):
+        '''Get annotation index of the object that starts at time.'''
         idx = bisect.bisect_left([obj.start_time for obj in self], time)
         if (idx < len(self) and self._objects[idx].start_time == time):
-            return self._objects[idx]
+            return idx
         else:
             return None
 
-    def get_annotation_by_end_time(self, time):
-        '''Get the annotation object that ends at time.'''
+    def _get_annotation_index_by_end_time(self, time):
+        '''Get the annotation index of the object that ends at time.'''
         idx = bisect.bisect_left([obj.end_time for obj in self], time)
         if (idx < len(self) and self._objects[idx].end_time == time):
-            return self._objects[idx]
+            return idx
         else:
             return None
 
-    def get_annotations_by_time(self, time):
-        '''Get annotation objects at the specified time.'''
+    def _get_annotation_indices_by_time(self, time):
+        '''Get annotation indices at the specified time.'''
         idx = bisect.bisect_left([obj.end_time for obj in self], time)
         if (idx < len(self._objects) and 
             time >= self._objects[idx].start_time):
             if (len(self._objects) > idx+1
                 and self._objects[idx+1].start_time == time):
-                return [self._objects[idx], self._objects[idx+1]]
+                return [idx, idx+1]
             else:
-                return [self._objects[idx]]
+                return [idx]
         else:
             return []
 
-    def get_annotations_between_timepoints(self, start, end, left_overlap=False, right_overlap=False):
-        '''Get annotation objects between start and end.
+    def _get_annotation_index_range_between_timepoints(self, start, end, left_overlap=False, right_overlap=False):
+        '''Get annotation index range for objects between start and end.
 
         If left_overlap or right_overlap is False annotation objects
         overlapping with start or end are excluded.
@@ -228,7 +228,31 @@ class Tier(object):
             index_hi = bisect.bisect_left(start_timepoints, end)
         else:
             index_hi = bisect.bisect_right(end_timepoints, end)
-        return self._objects[index_lo:index_hi]
+        return (index_lo, index_hi)
+
+    def get_annotation_by_start_time(self, time):
+        '''Get the annotation object that starts at time.'''
+        idx = self._get_annotation_index_by_start_time(time)
+        return idx if idx is None else self._objects[idx]
+
+    def get_annotation_by_end_time(self, time):
+        '''Get the annotation object that ends at time.'''
+        idx = self._get_annotation_index_by_end_time(time)
+        return idx if idx is None else self._objects[idx]
+
+    def get_annotations_by_time(self, time):
+        '''Get annotation objects at the specified time.'''
+        indices = self._get_annotation_indices_by_time(time)
+        return [self._objects[idx] for idx in indices]
+
+    def get_annotations_between_timepoints(self, start, end, left_overlap=False, right_overlap=False):
+        '''Get annotation objects between start and end.
+
+        If left_overlap or right_overlap is False annotation objects
+        overlapping with start or end are excluded.
+        '''
+        idx_lo, idx_hi = self._get_annotation_index_range_between_timepoints(start, end, left_overlap, right_overlap)
+        return self._objects[idx_lo:idx_hi]
 
     def get_nearest_annotation(self, time, pattern=r'.*', boundary='both',
                                direction='both', exclude_overlapped=False):
@@ -335,7 +359,48 @@ class Tier(object):
         warnings.warn('get_annotations_with_matching_text is deprecated. '\
                       'Use get_annotations_with_text instead.',DeprecationWarning)
         return self.get_annotations_with_text(pattern, n, regex)
-            
+
+    def delete_annotation_by_start_time(self, time):
+        '''Delete the annotation object that starts at time.'''
+        idx = self._get_annotation_index_by_start_time(time)
+        if idx is not None:
+            del self._objects[idx]
+
+    def delete_annotation_by_end_time(self, time):
+        '''Delete the annotation object that ends at time.'''
+        idx = self._get_annotation_index_by_end_time(time)
+        if idx is not None:
+            del self._objects[idx]
+
+    def delete_annotations_by_time(self, time):
+        '''Delete annotation objects at the specified time.'''
+        indices = self._get_annotation_indices_by_time(time)
+        for idx in reversed(indices): # Needs to be done in reverse order
+            del self._objects[idx]
+
+    def delete_annotations_between_timepoints(self, start, end, left_overlap=False, right_overlap=False):
+        '''Delete annotation objects between start and end.
+
+        If left_overlap or right_overlap is False annotation objects
+        overlapping with start or end are excluded.
+        '''
+        idx_lo, idx_hi = self._get_annotation_index_range_between_timepoints(start, end, left_overlap, right_overlap)
+        r = range(idx_hi-1,idx_lo-1,-1)
+        for idx in r: # Needs to be done in reverse order
+            del self._objects[idx]
+
+    def delete_annotations_with_text(self, pattern='', n=0, regex=False):
+        '''Delete annotation objects with text matching the pattern.
+
+        If n > 0 the first n matches are deleted, if n < 0, the last
+        n matches are deleted, if n = 0 all matches are deleted. The 
+        pattern is treated as a regular expression, if regex is True.
+        '''
+        # Inefficient implementation, but works
+        annotations = self.get_annotations_with_text(pattern, n, regex)
+        for annotation in annotations:
+            self.delete_annotation_by_start_time(annotation.start_time)
+
     def tier_type(self):
         '''Return the type of the tier as a string.'''
         return self.__class__.__name__
@@ -345,6 +410,9 @@ class Tier(object):
 
     def __getitem__(self, key):
         return self._objects[key]
+
+    def __delitem__(self, key):
+        del self._objects[key]
 
     def __len__(self):
         '''Return number of annotation objects in this tier.'''
