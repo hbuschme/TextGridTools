@@ -401,6 +401,11 @@ class Tier(object):
         for annotation in annotations:
             self.delete_annotation_by_start_time(annotation.start_time)
 
+    def delete_empty_annotations(self):
+        '''Delete annotation object with empty or whitespace-only text.
+        '''
+        self.delete_annotations_with_text(pattern=r'^\s*$', regex=True)
+
     def tier_type(self):
         '''Return the type of the tier as a string.'''
         return self.__class__.__name__
