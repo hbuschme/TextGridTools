@@ -164,127 +164,121 @@ def merge_textgrids(textgrids, ignore_duplicates=True):
 ## Chronogram
 ## ---------------------------------------------------------------------------
 
+def chronogram(tiers, speech_label=None, silence_label=None):
 
-def chronogram(tier_a, tier_b, speech_label=r'[^\s]+', silence_label=r'^\s*$'):
-    """Construct a chronogram given two input tiers. Interval labels are
-    classified as silences or volcalisations by matching them against
-    the speech_label and the silence_label regular expressions. By
-    default all intervals with empty or whitespace-only labels are
-    treated as silences.
+    '''Construct a chronogram between intervals in input tiers.
+    Interval labels are classified as silences or volcalisations
+    by matching them against the speech_label and the silence_label
+    regular expressions. By default all intervals with empty or
+    whitespace-only labels are treated as silences.
 
-    The code implements Jaffe and Feldstein's (1970) 6-state Markov
-    model. Instances of silences and overlaps are classified as
-    within-speaker-overlap (wso), between-speaker-overlap (bso),
-    within-speaker-silence (wss) or between-speaker-silence (bss).
-    Individual vocalistions are labelled with the the source tier
-    name."""
+    The code is a generalisation of Jaffe and Feldstein's (1970) 
+    6-state Markov model to an arbitrary number of speakers. Instances
+    of silences and overlaps are classified as within-speaker-overlap
+    (wso), between-speaker-overlap (bso), within-speaker-silence (wss)
+    or between-speaker-silence (bss).  Individual vocalistions are
+    labelled with the the source tier name.
+    '''
     
-    
 
-    # Calculate communicatfive states (self, other, none or both) for each tier.
-    communicative_states = communicative_state_classification(tier_a, tier_b,
-                                                              speech_label, silence_label)
+    # Calculate communicatfive states for each tier.
+    communicative_states = classify_communicative_state(tiers, speech_label, silence_label)
     
-    SINGLE_STATES = ['self', 'other']
-    JOINT_STATES = ['both', 'none']
+    is_joint_state = lambda st: st in ['all', 'none'] or st.find('+') > 0
+    is_single_state = lambda st: not is_joint_state(st)
 
-    res = IntervalTier(name='chronogram-{0}-{1}'.format(tier_a.name, tier_b.name))
+    chrono = IntervalTier(name='chronogram-{0}'.format('-'.join(t.name for t in tiers)))
     prev_single = None
-    # prev_joint = []
 
-    for i in range(len(communicative_states['a'])):
+    for i in range(len(communicative_states)):
 
-        cur_start = communicative_states['a'][i].start_time
-        cur_end = communicative_states['a'][i].end_time
-        cur_state = communicative_states['a'][i].text
+        cur_start = communicative_states[i].start_time
+        cur_end = communicative_states[i].end_time
+        cur_state = communicative_states[i].text
 
-        # Make sure there are no consecutive same states
-        # if i > 0:
-            # assert communicative_states['a'][i - 1].text != cur_state,\
-                # 'Consecutive joint states: {0}'.format(cur_start)
+        # Make sure there are no consecutive same state sequences
+        if i > 0:
+            prev_state = communicative_states[i - 1].text
+            assert  prev_state != cur_state,\
+                'Consecutive same states: {0}, {1}'.format(prev_state, cur_state)
 
-        if cur_state in JOINT_STATES:
+        if is_joint_state(cur_state):
 
             # If we have not seen a single-speaker vocalisation, skip it.
             if  prev_single is None:
                 continue
 
             try:
-                next_state = communicative_states['a'][i + 1].text
+                next_state = communicative_states[i + 1].text
             except IndexError:
                 next_state = None
             
             # Transitions between joint states do not result in speaker change.
             # The same is true for transitions from a joint state to a single state 
-            # equal to the previous single state and for file-final joint states..
-            if ((next_state in SINGLE_STATES and prev_single == next_state) 
-                or next_state in JOINT_STATES or next_state is None):
-                res.add_interval(Interval(start_time=cur_start, end_time=cur_end,
-                                           text='wso' if cur_state == 'both' else 'wss'))
+            # equal to the previous single state and for file-final joint states.
+            if (next_state is None or is_joint_state(next_state)
+                or (is_single_state(next_state) and prev_single == next_state)):
+                chrono.add_interval(
+                    Interval(start_time=cur_start, end_time=cur_end,
+                             text='wso' if cur_state != 'none' else 'wss'))
             else:
-                res.add_interval(Interval(start_time=cur_start, end_time=cur_end,
-                                           text='bso' if cur_state == 'both' else 'bss'))
+                chrono.add_interval(
+                    Interval(start_time=cur_start, end_time=cur_end,
+                             text='bso' if cur_state != 'none' else 'bss'))
         # Label single vocalisations with the source tier name.
-        elif cur_state in SINGLE_STATES:
-            res.add_interval(Interval(start_time=cur_start, end_time=cur_end,
-                                      text=tier_a.name if cur_state == 'self' else tier_b.name))
+        elif is_single_state(cur_state):
+            chrono.add_interval(Interval(start_time=cur_start, end_time=cur_end, text=cur_state))
             prev_single = cur_state
         else:
             raise Exception('Unknown cummunicative state: {0}'.format(cur_state))
 
-    return res
+    # FIXME: Should a dictionary with communicative labels and the chronogram be 
+    # returned instead of the chronogram itself?
+    # return {'communicative_labels': communicative_states, 'chronogram': chrono}
+    return chrono
 
-def communicative_state_labels(a, b, speech_label, silence_label):
-    """Apply 'self', 'other', 'none' or 'both' labels."""
-    if re.search(silence_label, a) and re.search(silence_label, b):
-        return 'none', 'none'
-    elif re.search(speech_label, a) and re.search(speech_label, b):
-        return 'both', 'both'
-    elif re.search(speech_label, a) and re.search(silence_label, b):
-        return 'self', 'other'
-    elif re.search(silence_label, a) and re.search(speech_label, b):
-        return 'other', 'self'
+def communicative_labels(tiers, voc_re=None, silence_re=None):
+
+    if silence_re is not None:
+        speech_tiers = [t.name for t in tiers if re.search(silence_re, t[0].text) is None]
     else:
-        raise Exception('Unknown speech/silence labels: {0}, {1}'.format(a, b))
+        if speech_re is None:
+            speech_re = r'[^\s]+',
+        speech_tiers = [t.name for t in tiers if re.search(speech_re, t[0].text) is not None]
 
-def communicative_state_classification(tier_a, tier_b, speech_label, silence_label):
-    """Calculate boundaries of overlapping intervals in each of the tiers
-    and classify them as 'self', 'other', 'none' or 'both'."""
+    if len(speech_tiers) == len(tiers):
+        return 'all'
+    elif not speech_tiers:
+        return 'none'
+    else:
+        return '+'.join(speech_tiers)
+
+def classify_communicative_state(tiers, speech_label=None, silence_label=None):
 
     # Fill all gaps with empty intervals and ensure the tiers have
     # identical start and end times
-    start_time_earliest = min(tier_a.start_time, tier_b.start_time)
-    end_time_latest = max(tier_a.end_time, tier_b.end_time)
-    tier_a_filled = tier_a.get_copy_with_gaps_filled(start_time=start_time_earliest,
-                                                     end_time=end_time_latest)
-    tier_b_filled = tier_b.get_copy_with_gaps_filled(start_time=start_time_earliest,
-                                                     end_time=end_time_latest)
+    start_time_earliest = min(tier.start_time for tier in tiers)
+    end_time_latest = max(tier.end_time for tier in tiers)
 
-    communicative_state = {'a': IntervalTier(name='communicative_states_a'),
-                           'b': IntervalTier(name='communicative_states_b')}
+    tiers_filled = [tier.get_copy_with_gaps_filled(start_time=start_time_earliest,
+                                                   end_time=end_time_latest)
+                    for tier in tiers]
 
-    i = j = 0
-    while i < len(tier_a_filled) and j < len(tier_b_filled):
-        lo = max(tier_a_filled[i].start_time, tier_b_filled[j].start_time)
-        hi = min(tier_a_filled[i].end_time, tier_b_filled[j].end_time)
+    communicative_states = IntervalTier(name='communicative_states')
 
+
+    while all(tiers_filled):
+        lo = max(x[0].start_time for x in tiers_filled)
+        hi = min(x[0].end_time for x in tiers_filled)
+        
         if lo < hi:
-            labels = communicative_state_labels(tier_a_filled[i].text,
-                                                tier_b_filled[j].text,
-                                                speech_label,silence_label)
+            com_state = communicative_labels(tiers_filled, speech_label, silence_label)
+            communicative_states.add_annotation(Interval(lo, hi, com_state))
 
-            communicative_state['a'].add_interval(Interval(lo, hi, labels[0]))
-            communicative_state['b'].add_interval(Interval(lo, hi, labels[1]))
-        if tier_a_filled[i].end_time < tier_b_filled[j].end_time:
-            i += 1
-        else:
-            j += 1
+        for t in tiers_filled:
+            if t[0].end_time == hi:
+                del t[0]
 
     # Merge consecutive intervals with indentical labels
-    communicative_state = {k: v.get_copy_with_same_intervals_merged()
-                           for k, v in communicative_state.iteritems()}
-
-    return communicative_state
-
-
-
+    communicative_states = communicative_states.get_copy_with_same_intervals_merged()
+    return communicative_states
