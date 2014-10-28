@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 # TextGridTools -- Read, write, and manipulate Praat TextGrid files
-# Copyright (C) 2011 Hendrik Buschmeier
+# Copyright (C) 2011-2014 Hendrik Buschmeier
 # 
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -22,7 +22,7 @@ from distutils.core import setup
 setup(
     name='tgt',
     description='TextGridTools -- Read, write, and manipulate Praat TextGrid files',
-    version='1.0.2',
+    version='1.1.0',
     packages=['tgt'],
     scripts=[
     	'scripts/tgt-concatenate-textgrids.py',
@@ -39,7 +39,7 @@ setup(
     	'Programming Language :: Python',
     	'Programming Language :: Python :: 2.7',
     	'Programming Language :: Python :: 3',
-    	'Programming Language :: Python :: 3.3',
+    	'Programming Language :: Python :: 3.4',
     	'Topic :: Scientific/Engineering :: Information Analysis',
     ],
 )
