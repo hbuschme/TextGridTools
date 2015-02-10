@@ -22,6 +22,7 @@ import copy
 import codecs
 import datetime
 import collections
+import xml.etree.ElementTree as ET
 
 from .core import TextGrid, IntervalTier, Interval, PointTier, Point, Time
 
@@ -172,6 +173,31 @@ def include_empty_intervals_in_tier(tier_name, include_empty_intervals):
         return tier_name in include_empty_intervals
     else:
         raise TypeError('Invalid type of include_empty_intervals: {0}.'.format(type(include_empty_intervals)))
+
+def read_eaf(filename):
+    eaf_tree = ET.parse(filename)
+
+    time_units = eaf_tree.find('HEADER').attrib['TIME_UNITS']
+    if time_units != 'milliseconds':
+        raise Exception('Unsupported TIME_UNITS format: {}. Only "milliseconds" are supported.'.format(time_units))
+
+    tg = TextGrid(filename=filename)
+    time_slots = dict((ts.attrib['TIME_SLOT_ID'], float(ts.attrib['TIME_VALUE']) / 1000)
+                      for ts in eaf_tree.iterfind('TIME_ORDER/TIME_SLOT'))
+
+    for eaf_tr in eaf_tree.iterfind('TIER'):
+        tgt_tier = IntervalTier(name=eaf_tr.attrib['TIER_ID'])
+
+        for intr in eaf_tr.iterfind('ANNOTATION/'):
+            if intr.tag == 'ALIGNABLE_ANNOTATION':
+                tgt_tier.add_interval(Interval(
+                    start_time=time_slots[intr.attrib['TIME_SLOT_REF1']],
+                    end_time=time_slots[intr.attrib['TIME_SLOT_REF2']],
+                    text=intr.find('ANNOTATION_VALUE').text))
+            else:
+                raise Exception('Only ALIGNABLE_ANNOTATIONs are supported at the moment')
+        tg.add_tier(tgt_tier)
+    return tg
 
 
 ##  Functions for writing TextGrid files

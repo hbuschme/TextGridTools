@@ -25,10 +25,10 @@ from .core import Time
 
 if sys.version_info < (3, 0):
 	from . import io
-	from .io import read_textgrid, write_to_file
+	from .io import read_textgrid, write_to_file, read_eaf
 else:
 	from . import io3 as io
-	from .io3 import read_textgrid, write_to_file
+	from .io3 import read_textgrid, write_to_file, read_eaf
 
 from . import agreement, util
 
