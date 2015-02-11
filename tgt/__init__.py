@@ -25,10 +25,10 @@ from .core import Time
 
 if sys.version_info < (3, 0):
 	from . import io
-	from .io import read_textgrid, write_to_file, read_eaf
+	from .io import read_textgrid, read_eaf, write_to_file
 else:
 	from . import io3 as io
-	from .io3 import read_textgrid, write_to_file, read_eaf
+	from .io3 import read_textgrid, read_eaf, write_to_file
 
 from . import agreement, util
 
@@ -37,7 +37,7 @@ __all__ = [
     'Tier', 'IntervalTier', 'PointTier',
     'Annotation', 'Interval', 'Point',
     'Time',
-    'read_textgird,' 'write_to_file',
+    'read_textgird', 'read_eaf', 'write_to_file',
     'agreement', 'io', 'util',
 
 ]
