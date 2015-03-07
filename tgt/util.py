@@ -185,7 +185,7 @@ def chronogram(tiers, speech_label=None, silence_label=None):
     # Calculate communicatfive states for each tier.
     communicative_states = classify_communicative_state(tiers, speech_label, silence_label)
     
-    is_joint_state = lambda st: st in ['all', 'none'] or st.find(',') > 0
+    is_joint_state = lambda st: st == 'none' or st.find(',') > 0
     is_single_state = lambda st: not is_joint_state(st)
 
     chrono = IntervalTier(name='chronogram-{0}'.format('-'.join(t.name for t in tiers)))
@@ -248,9 +248,7 @@ def communicative_labels(tiers, voc_re=None, silence_re=None):
             speech_re = r'[^\s]+',
         speech_tiers = [t.name for t in tiers if re.search(speech_re, t[0].text) is not None]
 
-    if len(speech_tiers) == len(tiers):
-        return 'all'
-    elif not speech_tiers:
+    if not speech_tiers:
         return 'none'
     else:
         return ','.join(speech_tiers)
