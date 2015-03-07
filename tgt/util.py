@@ -185,7 +185,7 @@ def chronogram(tiers, speech_label=None, silence_label=None):
     # Calculate communicatfive states for each tier.
     communicative_states = classify_communicative_state(tiers, speech_label, silence_label)
     
-    is_joint_state = lambda st: st in ['all', 'none'] or st.find('+') > 0
+    is_joint_state = lambda st: st in ['all', 'none'] or st.find(',') > 0
     is_single_state = lambda st: not is_joint_state(st)
 
     chrono = IntervalTier(name='chronogram-{0}'.format('-'.join(t.name for t in tiers)))
@@ -219,13 +219,14 @@ def chronogram(tiers, speech_label=None, silence_label=None):
             # equal to the previous single state and for file-final joint states.
             if (next_state is None or is_joint_state(next_state)
                 or (is_single_state(next_state) and prev_single == next_state)):
+
                 chrono.add_interval(
                     Interval(start_time=cur_start, end_time=cur_end,
-                             text='wso' if cur_state != 'none' else 'wss'))
+                             text='wso:{{{}}}'.format(cur_state) if cur_state != 'none' else 'wss'))
             else:
                 chrono.add_interval(
                     Interval(start_time=cur_start, end_time=cur_end,
-                             text='bso' if cur_state != 'none' else 'bss'))
+                             text='bso:{{{}}}'.format(cur_state) if cur_state != 'none' else 'bss'))
         # Label single vocalisations with the source tier name.
         elif is_single_state(cur_state):
             chrono.add_interval(Interval(start_time=cur_start, end_time=cur_end, text=cur_state))
@@ -252,7 +253,7 @@ def communicative_labels(tiers, voc_re=None, silence_re=None):
     elif not speech_tiers:
         return 'none'
     else:
-        return '+'.join(speech_tiers)
+        return ','.join(speech_tiers)
 
 def classify_communicative_state(tiers, speech_label=None, silence_label=None):
 
