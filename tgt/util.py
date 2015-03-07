@@ -30,8 +30,8 @@ from .core import TextGrid, IntervalTier, Interval
 def shift_boundaries(tier, left, right):
     """
     Return a copy of the tier with boundaries shifted by the specified
-    amount of time (in seconds). Positive values expand the tier and negative values shrink
-    it, i.e.:
+    amount of time (in seconds). Positive values expand the tier and negative
+    values shrink it, i.e.:
     * positive value of left shifts the left boundary to the left
     * negative value of left shifts the left boundary to the right
     * positive value of right shifts the right boundary to the right
@@ -47,7 +47,8 @@ def shift_boundaries(tier, left, right):
 
         if interval.end_time <= left * -1:
             continue
-        elif i > 0 and interval.start_time > left * -1:
+
+        if interval.start_time > left * -1:
             interval_start_shifted = interval.start_time + left
         else:
             interval_start_shifted = 0
@@ -55,12 +56,12 @@ def shift_boundaries(tier, left, right):
         interval_end_shifted = interval.end_time + left
         if (interval_start_shifted >= tier_end_shifted):
             break
-        elif i == len(tier.intervals) - 1 or interval_end_shifted > tier_end_shifted:
+        elif interval_end_shifted > tier_end_shifted:
             interval_end_shifted = tier_end_shifted
 
         tier_shifted.add_annotation(Interval(interval_start_shifted,
-                                           interval_end_shifted,
-                                           interval.text))
+                                             interval_end_shifted,
+                                             interval.text))
     return tier_shifted
 
 
