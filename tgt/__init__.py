@@ -37,7 +37,7 @@ __all__ = [
     'Tier', 'IntervalTier', 'PointTier',
     'Annotation', 'Interval', 'Point',
     'Time',
-    'read_textgird', 'read_eaf', 'write_to_file',
+    'read_textgrid', 'read_eaf', 'write_to_file',
     'agreement', 'io', 'util',
 
 ]
