@@ -22,10 +22,11 @@ from distutils.core import setup
 setup(
     name='tgt',
     description='TextGridTools -- Read, write, and manipulate Praat TextGrid files',
-    version='1.2.0',
+    version='1.3.0',
     packages=['tgt'],
     scripts=[
     	'scripts/tgt-concatenate-textgrids.py',
+        'tgt-extract-part.py',
     	'scripts/tgt-print-tiernames.py',
     ],
     maintainer='Hendrik Buschmeier',
