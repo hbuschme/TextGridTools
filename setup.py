@@ -26,7 +26,7 @@ setup(
     packages=['tgt'],
     scripts=[
     	'scripts/tgt-concatenate-textgrids.py',
-        'tgt-extract-part.py',
+        'scripts/tgt-extract-part.py',
     	'scripts/tgt-print-tiernames.py',
     ],
     maintainer='Hendrik Buschmeier',
