@@ -85,10 +85,18 @@ class TextGrid(object):
         return name in self.get_tier_names()
 
     def get_tier_by_name(self, name):
-        '''Get tier of specified name.'''
+        '''Get the first tier with the specified name.'''
         for tier in self._tiers:
             if tier.name == name:
                 return tier
+        raise ValueError('Textgrid ' + self.filename +
+                    ' does not have a tier called "' + name + '".')
+
+    def get_tiers_by_name(self, name):
+        '''Get a list of all tiers with the specified name.'''
+        result = [tier for tier in self._tiers if tier.name == name]
+        if result:
+            return result
         raise ValueError('Textgrid ' + self.filename +
                     ' does not have a tier called "' + name + '".')
 
