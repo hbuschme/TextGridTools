@@ -285,7 +285,8 @@ def classify_communicative_state(tiers, speech_label=None, silence_label=None):
 
 def turns(chrono):
 
-    '''Returns turns (defined as intervals bounded by solo vocalisations of two different speakers) given a chronogram.
+    '''Returns turns (defined as intervals bounded by solo vocalisations
+    of two different speakers) given a chronogram.
     '''
 
     turns = IntervalTier(name = 'turns')
