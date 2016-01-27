@@ -282,3 +282,27 @@ def classify_communicative_state(tiers, speech_label=None, silence_label=None):
     # Merge consecutive intervals with indentical labels
     communicative_states = communicative_states.get_copy_with_same_intervals_merged()
     return communicative_states
+
+def turns(chrono):
+
+    '''Returns turns (defined as intervals bounded by solo vocalisations of two different speakers) given a chronogram.
+    '''
+
+    turns = IntervalTier(name = 'turns')
+    prev_solo = None
+
+    for intr in chrono:
+        if intr.text[:3] in ['wso', 'bso', 'wss', 'bss']:
+            continue
+        elif prev_solo is None:
+            cur_turn = Interval(intr.start_time, intr.end_time, intr.text)
+            prev_solo = intr.text
+        elif intr.text != prev_solo:
+            cur_turn.end_time = intr.start_time
+            turns.add_interval(cur_turn)
+            cur_turn = Interval(intr.start_time, intr.end_time, intr.text)
+            prev_solo = intr.text
+    else:
+        cur_turn.end_time = intr.end_time
+        turns.add_interval(cur_turn)
+    return turns
