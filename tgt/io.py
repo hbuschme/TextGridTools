@@ -27,15 +27,27 @@ import xml.etree.ElementTree as ET
 from .core import TextGrid, IntervalTier, Interval, PointTier, Point, Time
 
 
+def escape_text(text):
+    """Escape text for exporting to TextGrid."""
+    return text.replace('"', '""')
+
+
+def deescape_text(text):
+    """De-escape text when importing from TextGrid."""
+    return text.replace('""', '"')
+
+
 def read_textgrid(filename, encoding='utf-8', include_empty_intervals=False):
     '''Read a Praat TextGrid file and return a TextGrid object. 
-    If include_empty_intervals is False (the default), empty intervals
-    are excluded. If True, they are included. Empty intervals from specific
-    tiers can be also included by specifying tier names as a string (for one tier)
-    or as a list.'''
+
+       If include_empty_intervals is False (the default), empty intervals
+       are excluded. If True, they are included. Empty intervals from 
+       specific tiers can be also included by specifying tier names as a
+       string (for one tier) or as a list.
+    '''
     with codecs.open(filename, 'r', encoding) as f:
         # Read whole file into memory ignoring empty lines and lines consisting
-        # solely of a single double quotes.
+        # solely of a single double quote.
         stg = [line.strip() for line in f.readlines()
             if line.strip() not in ['', '"']]
     if stg[0] != 'File type = "ooTextFile"':
@@ -53,43 +65,42 @@ def read_short_textgrid(filename, stg, include_empty_intervals=False):
 
     def read_interval_tier(stg_extract):
         '''Read and return an IntervalTier from a short TextGrid.'''
-        name = stg_extract[1].strip('"')  # name w/o quotes
+        name = stg_extract[1][1:-1] # name w/o quotes
+        name = deescape_text(name)
         start_time = Time(stg_extract[2])
         end_time = Time(stg_extract[3])
         include_empty_intervals_this_tier = include_empty_intervals_in_tier(name, include_empty_intervals)
         it = IntervalTier(start_time, end_time, name)
         i = 5
         while i < len(stg_extract):
-            text = stg_extract[i + 2].strip('"') # text w/o quotes
+            text = stg_extract[i + 2][1:-1] # text w/o quotes
             if text.strip() != '' or include_empty_intervals_this_tier:
                 it.add_annotation(Interval(
                     Time(stg_extract[i]), # left bound
                     Time(stg_extract[i + 1]), # right bound
-                    text))
+                    deescape_text(text)))
             i += 3               
         return it
 
     def read_point_tier(stg_extract):
         '''Read and return a PointTier (called TextTier) from a short TextGrid.'''
-        name = stg_extract[1].strip('"')  # name w/o quotes
+        name = stg_extract[1][1:-1]  # name w/o quotes
+        name = deescape_text(name)
         start_time = stg_extract[2]
         end_time = stg_extract[3]
         pt = PointTier(start_time, end_time, name)
         i = 5
         while i < len(stg_extract):
-            text = stg_extract[i + 1].strip('"') # text w/o quotes
+            text = stg_extract[i + 1][1:-1] # text w/o quotes
             pt.add_annotation(Point(
                 stg_extract[i], # time
-                text))   
+                deescape_text(text)))
             i += 2
         return pt
 
     tg = TextGrid(filename)
-    read_start_time = stg[2]
-    read_end_time = stg[3]
     if stg[4] != '<exists>':
         raise Exception(filename)
-    read_no_of_tiers = stg[5]
     index = 6
     while index < len(stg):
         num_obj = int(stg[index + 4])
@@ -114,6 +125,7 @@ def read_long_textgrid(filename, stg, include_empty_intervals=False):
     def read_interval_tier(stg_extract):
         '''Read and return an IntervalTier from a long TextGrid.'''
         name = get_attr_val(stg_extract[2])[1:-1]  # name w/o quotes
+        name = deescape_text(name)
         start_time = get_attr_val(stg_extract[3])
         end_time = get_attr_val(stg_extract[4])
         include_empty_intervals_this_tier = include_empty_intervals_in_tier(name, include_empty_intervals)
@@ -125,13 +137,14 @@ def read_long_textgrid(filename, stg, include_empty_intervals=False):
                 it.add_annotation(Interval(
                     Time(get_attr_val(stg_extract[i])), # left bound
                     Time(get_attr_val(stg_extract[i + 1])), # right bound
-                    text))
+                    deescape_text(text)))
             i += 4
         return it
 
     def read_point_tier(stg_extract):
         '''Read and return a PointTier (called TextTier) from a long TextGrid.'''
         name = get_attr_val(stg_extract[2])[1:-1]  # name w/o quotes
+        name = deescape_text(name)
         start_time = get_attr_val(stg_extract[3])
         end_time = get_attr_val(stg_extract[4])
         pt = PointTier(start_time, end_time, name)
@@ -140,16 +153,13 @@ def read_long_textgrid(filename, stg, include_empty_intervals=False):
             text = get_attr_val(stg_extract[i + 1])[1:-1] # text w/o quotes
             pt.add_annotation(Point(
                 Time(get_attr_val(stg_extract[i])), # time
-                text))
+                deescape_text(text)))
             i += 3
         return pt
 
     tg = TextGrid(filename)
-    read_start_time = get_attr_val(stg[2])
-    read_end_time = get_attr_val(stg[3])
     if stg[4].split()[1] != '<exists>':
         raise Exception(filename)
-    read_no_of_tiers = get_attr_val(stg[5])
     index = 7
     while index < len(stg):
         num_obj = int(get_attr_val(stg[index + 5]))
@@ -173,6 +183,7 @@ def include_empty_intervals_in_tier(tier_name, include_empty_intervals):
         return tier_name in include_empty_intervals
     else:
         raise TypeError('Invalid type of include_empty_intervals: {0}.'.format(type(include_empty_intervals)))
+
 
 def read_eaf(filename):
     eaf_tree = ET.parse(filename)
@@ -230,13 +241,13 @@ def export_to_short_textgrid(textgrid):
     textgrid_corrected = correct_start_end_times_and_fill_gaps(textgrid)
     for tier in textgrid_corrected:
         result += ['"' + tier.tier_type() + '"',
-                   '"' + tier.name + '"',
+                   '"' + escape_text(tier.name) + '"',
                    tier.start_time, tier.end_time, len(tier)]
         if isinstance(tier, IntervalTier):
-            result += [u'{0}\n{1}\n"{2}"'.format(obj.start_time, obj.end_time, obj.text)
+            result += [u'{0}\n{1}\n"{2}"'.format(obj.start_time, obj.end_time, escape_text(obj.text))
                        for obj in tier]
         elif isinstance(tier, PointTier):
-            result += [u'{0}\n"{1}"'.format(obj.time, obj.text)
+            result += [u'{0}\n"{1}"'.format(obj.time, escape_text(obj.text))
                        for obj in tier]
         else:
             raise Exception('Unknown tier type: {0}'.format(tier.name))
@@ -257,7 +268,7 @@ def export_to_long_textgrid(textgrid):
     for i, tier in enumerate(textgrid_corrected):
         result += ['\titem [{0}]:'.format(i + 1),
                    '\t\tclass = "{0}"'.format(tier.tier_type()),
-                   '\t\tname = "{0}"'.format(tier.name),
+                   '\t\tname = "{0}"'.format(escape_text(tier.name)),
                    '\t\txmin = ' + unicode(tier.start_time),
                    '\t\txmax = ' + unicode(tier.end_time),
                    '\t\tintervals: size = ' + unicode(len(tier))]
@@ -266,12 +277,12 @@ def export_to_long_textgrid(textgrid):
                 result += ['\t\tintervals [{0}]:'.format(j + 1),
                            '\t\t\txmin = ' + unicode(obj.start_time),
                            '\t\t\txmax = ' + unicode(obj.end_time),
-                           '\t\t\ttext = "' + obj.text + '"']
+                           '\t\t\ttext = "' + escape_text(obj.text) + '"']
         elif isinstance(tier, PointTier):
             for j, obj in enumerate(tier):
                 result += ['\t\tpoints [{0}]:'.format(j + 1),
                            '\t\t\tnumber = ' + unicode(obj.time),
-                           '\t\t\tmark = "' + obj.text + '"']
+                           '\t\t\tmark = "' + escape_text(obj.text) + '"']
         else:
             raise Exception('Unknown tier type: {0}'.format(tier.name))
     return '\n'.join([unicode(x) for x in result])
