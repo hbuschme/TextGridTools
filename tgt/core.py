@@ -30,8 +30,13 @@ __all__ = [
     'TextGrid',
     'Tier', 'IntervalTier', 'PointTier',
     'Annotation', 'Interval', 'Point',
-    'Time'
+    'Time',
+    'TextGridToolsException',
 ]
+
+
+class TextGridToolsException(Exception):
+    pass
 
 
 class TextGrid(object):

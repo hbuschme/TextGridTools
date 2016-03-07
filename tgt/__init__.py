@@ -22,6 +22,7 @@ from .core import TextGrid
 from .core import Tier, IntervalTier, PointTier
 from .core import Annotation, Interval, Point
 from .core import Time
+from .core import TextGridToolsException
 
 if sys.version_info < (3, 0):
 	from . import io
