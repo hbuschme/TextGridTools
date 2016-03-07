@@ -96,22 +96,20 @@ def get_overlapping_intervals(tier1, tier2, regex=r'[^\s]+', overlap_label=None)
     return overlaps
 
 
-def concatenate_tiers(tier1, tier2, use_absolute_time):
+def concatenate_tiers(tier1, tier2, offset):
     """Concatenate two tiers and return a new tier.
 
-    If ``use_absolute_time`` is ``False``, start and end times of 
-    intervals in tier2 are offset by the end_time of tier1.
-    If `use_absolute_time` is `True`, start and end times of
-    intervals are used as is.
+    Offset is the time added to each interval's boundaries in order to
+    put them after the intervals of the preceeding tier. If intervals
+    have absolute timing on each tier (i.e., start times of tier > 0 for
+    later tiers, an offset of 0 should be used).
 
     Keyword argument:
-    tier1 -- a Tier object
-    tier2 -- a Tier object
-    use_absolute_time -- a boolean
-
+    tier1 -- Tier object
+    tier2 -- Tier object
+    offset -- float (>= 0)
     """
     result = copy.deepcopy(tier1)
-    offset = 0 if use_absolute_time else tier1.end_time
     for annotation in tier2:
         if hasattr(tier1, 'intervals') and hasattr(tier2, 'intervals'):
             result.add_annotation(Interval(
@@ -155,6 +153,7 @@ def concatenate_textgrids(
         raise TextGridToolsException(
             'Different numbers of tiers or non-matching tier names.')
     ccd_tiers = {}
+    offset = 0
     for textgrid in textgrids:
         for tier in textgrid:
             if tier.name not in common_tiers and ignore_nonmatching_tiers: 
@@ -165,7 +164,8 @@ def concatenate_textgrids(
                 ccd_tiers[tier.name] = concatenate_tiers(
                     tier1=ccd_tiers[tier.name], 
                     tier2=tier, 
-                    use_absolute_time=use_absolute_time)
+                    offset=0 if use_absolute_time else offset)
+        offset = max([tier.end_time for tier in ccd_tiers.values()])
     result_tg = TextGrid()
     result_tg.add_tiers([ccd_tiers[x] for x in common_tiers]) #preserve order
     return result_tg
