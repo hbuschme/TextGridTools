@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 # TextGridTools -- Read, write, and manipulate Praat TextGrid files
-# Copyright (C) 2011-2014 Hendrik Buschmeier, Marcin Włodarczak
+# Copyright (C) 2011-2016 Hendrik Buschmeier, Marcin Włodarczak
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -30,8 +30,13 @@ __all__ = [
     'TextGrid',
     'Tier', 'IntervalTier', 'PointTier',
     'Annotation', 'Interval', 'Point',
-    'Time'
+    'Time',
+    'TextGridToolsException',
 ]
+
+
+class TextGridToolsException(Exception):
+    pass
 
 
 class TextGrid(object):
@@ -140,21 +145,39 @@ class Tier(object):
 
     def _get_start_time(self):
         '''Get start time of this tier.'''
-        if len(self._objects) > 0:
+        if self._objects:
             return min([self._objects[0].start_time, self._specd_start_time])
         else:
             return self._specd_start_time
 
-    start_time = property(fget=_get_start_time, doc='Start time.')
+    def _set_start_time(self, time):
+        '''Set start time of this tier.'''
+        if self._objects and time > self._objects[0].start_time:
+            raise TextGridToolsException('Start time cannot be set to a value later than first annotation starts.')
+        self._specd_start_time = Time(time)
+
+    start_time = property(
+        fget=_get_start_time,
+        fset=_set_start_time,
+        doc='Start time.')
 
     def _get_end_time(self):
         '''Get end time of this tier.'''
-        if len(self._objects) > 0:
+        if self._objects:
             return max([self._objects[-1].end_time, self._specd_end_time])
         else:
             return self._specd_end_time
 
-    end_time = property(fget=_get_end_time, doc='End time.')
+    def _set_end_time(self, time):
+        '''Set end time of this tier.'''
+        if self._objects and time < self._objects[-1].end_time:
+            raise TextGridToolsException('End time cannot be set to a value earlier than last annotation ends.')
+        self._specd_end_time = Time(time)
+
+    end_time = property(
+        fget=_get_end_time,
+        fset=_set_end_time,
+        doc='End time.')
 
     def add_annotation(self, obj):
         '''Adds an annotation object to this tier.

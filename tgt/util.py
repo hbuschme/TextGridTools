@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 # TextGridTools -- Read, write, and manipulate Praat TextGrid files
-# Copyright (C) 2011-2014 Hendrik Buschmeier, Marcin Włodarczak
+# Copyright (C) 2011-2016 Hendrik Buschmeier, Marcin Włodarczak
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -22,7 +22,8 @@ import re
 import collections
 import copy
 
-from .core import TextGrid, IntervalTier, Interval
+from .core import (TextGrid, IntervalTier, Interval, Point, 
+    TextGridToolsException)
 
 ##  High-level functions
 ##----------------------------------------------------------------------------
@@ -95,51 +96,83 @@ def get_overlapping_intervals(tier1, tier2, regex=r'[^\s]+', overlap_label=None)
     return overlaps
 
 
-def concatenate_textgrids(textgrids, ignore_nonmatching_tiers=False):
-    '''Concatenate Tiers with matching names.
+def concatenate_tiers(tier1, tier2, offset):
+    """Concatenate two tiers and return a new tier.
 
-    TextGrids are concatenated in the order they are specified. If 
-    ignore_nonmatching_tiers is False, an exception is raised if the
-    number and the names of tiers differ between TextGrids.
-    '''
-    tier_names_intersection = set.intersection(
+    Offset is the time added to each interval's boundaries in order to
+    put them after the intervals of the preceeding tier. If intervals
+    have absolute timing on each tier (i.e., start times of tier > 0 for
+    later tiers, an offset of 0 should be used).
+
+    Keyword argument:
+    tier1 -- Tier object
+    tier2 -- Tier object
+    offset -- float (>= 0)
+    """
+    result = copy.deepcopy(tier1)
+    for annotation in tier2:
+        if hasattr(tier1, 'intervals') and hasattr(tier2, 'intervals'):
+            result.add_annotation(Interval(
+                start_time=annotation.start_time + offset,
+                end_time=annotation.end_time + offset,
+                text=annotation.text))
+        elif hasattr(tier1, 'points') and hasattr(tier2, 'points'):
+            result.add_annotation(Point(
+                time=annotation.time + offset,
+                text=annotation.text))
+        else:
+            raise TextGridToolsException()
+        result.end_time = tier2.end_time + offset
+    return result
+
+
+def concatenate_textgrids(
+        textgrids,
+        ignore_nonmatching_tiers=False,
+        use_absolute_time=False):
+    """Concatenates TextGrid objects and return a new one.
+
+    If `ignore_nonmatching_tiers` is `False`, an exception is raised
+    if the number or names of tiers differ among the TextGrids.
+
+    If `use_absolute_time` is `False`, start and end times of 
+    intervals are offset by the end_time of the preceeding tier.
+    If `use_absolute_time` is `True`, start and end times of
+    intervals are used as is. This is useful if start_time of textgrids
+    does not equal 0.
+
+    Keyword argument:
+    textgrids -- a list of TextGrid objects
+    ignore_nonmatching_tiers -- a boolean (default False)
+    use_absolute_time -- a boolean (default False)
+    """
+    common_tiers = set.intersection(
         *[set(tg.get_tier_names()) for tg in textgrids])
-    # Check whether the TextGrids have the same number of tiers
-    # and whether tier names match. If they don't
-    # and if ignore_nonmatching_tiers is False, raise an exception.
-    if (not ignore_nonmatching_tiers
-        and not all([len(tier_names_intersection) == len(tg) for tg in textgrids])):
-        raise Exception('TextGrids have different numbers of tiers or tier names do not match.')
-    tot_duration = 0
-    tiers = {}  # tier_name : tgt.Tier()
+    if (not ignore_nonmatching_tiers and
+            not all([len(common_tiers) == len(tg) for tg in textgrids])):
+        raise TextGridToolsException(
+            'Different numbers of tiers or non-matching tier names.')
+    ccd_tiers = {}
+    offset = 0
     for textgrid in textgrids:
         for tier in textgrid:
-            if tier.name not in tier_names_intersection:
+            if tier.name not in common_tiers and ignore_nonmatching_tiers: 
                 continue
-            intervals = []
-            # If this is the first we see this tier, we just make a copy
-            # of it as it is.
-            if tier.name not in tiers.keys():
-                tiers[tier.name] = copy.deepcopy(tier)
-            # Otherwise we update the start and end times of intervals
-            # and append them to the first part.
+            if not tier.name in ccd_tiers:
+                ccd_tiers[tier.name] = copy.deepcopy(tier)
             else:
-                for interval in tier.intervals:
-                    interval.start_time += tot_duration
-                    interval.end_time += tot_duration
-                    intervals.append(interval)
-                tiers[tier.name].add_annotations(intervals)
-        tot_duration += textgrid.end_time
-    # Create a new TextGrid and add the concatenated tiers
-    textgrid_concatenated = TextGrid()
-    # Add tiers in the order they're found in the first TextGrid.
-    textgrid_concatenated.add_tiers(
-        [tiers[x] for x in tier_names_intersection])
-    return textgrid_concatenated
+                ccd_tiers[tier.name] = concatenate_tiers(
+                    tier1=ccd_tiers[tier.name], 
+                    tier2=tier, 
+                    offset=0 if use_absolute_time else offset)
+        offset = max([tier.end_time for tier in ccd_tiers.values()])
+    result_tg = TextGrid()
+    result_tg.add_tiers([ccd_tiers[x] for x in common_tiers]) #preserve order
+    return result_tg
 
 
 def merge_textgrids(textgrids, ignore_duplicates=True):
-    '''Return a TextGrid object with tiers in all textgrids.p
+    '''Return a TextGrid object with tiers in all textgrids.
 
     If ignore_duplicates is False, tiers with equal names are renamed
     by adding a path of the textgrid or a unique number incremented

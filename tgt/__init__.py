@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 # TextGridTools -- Read, write, and manipulate Praat TextGrid files
-# Copyright (C) 2011-2014 Hendrik Buschmeier, Marcin Włodarczak
+# Copyright (C) 2011-2016 Hendrik Buschmeier, Marcin Włodarczak
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -22,6 +22,7 @@ from .core import TextGrid
 from .core import Tier, IntervalTier, PointTier
 from .core import Annotation, Interval, Point
 from .core import Time
+from .core import TextGridToolsException
 
 if sys.version_info < (3, 0):
 	from . import io
