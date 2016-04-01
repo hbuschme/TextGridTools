@@ -28,6 +28,7 @@ setup(
     	'scripts/tgt-concatenate-textgrids.py',
         'scripts/tgt-extract-part.py',
     	'scripts/tgt-print-tiernames.py',
+        'scripts/tgt-shift-boundaries.py'
     ],
     maintainer='Hendrik Buschmeier',
     maintainer_email='hbuschme@uni-bielefeld.de',
