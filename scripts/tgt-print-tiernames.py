@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-# print-tiernames.py - Prints the tier names of a textrid file
+# tgt-print-tiernames.py - Prints the tier names of a TextGrid
 # Copyright (C) 2012 Hendrik Buschmeier
 # 
 # This program is free software: you can redistribute it and/or modify

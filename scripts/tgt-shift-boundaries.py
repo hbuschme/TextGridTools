@@ -21,9 +21,11 @@
 # If a directory is specified, all tier names of the .TextGrid
 # files contained in this directory are printed.
 
+from __future__ import division, print_function
 
 import argparse
 import os.path
+import sys
 
 import tgt
 
@@ -62,6 +64,7 @@ def main():
 	except IOError:
 		print('An error occurred reading file {file}'.
 				format(file=arguments.file))
+		sys.exit(1)
 	# Create new textgrid
 	if arguments.outfile is None:
 		basename, extension = os.path.splitext(arguments.file)
