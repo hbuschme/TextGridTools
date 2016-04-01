@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-# tgt-shift-boundaries.py - Shifts the boundaries of all tiers
+# tgt-shift-boundaries.py - Shift all boundaries in a TextGrid
 # Copyright (C) 2016 Hendrik Buschmeier
 # 
 # This program is free software: you can redistribute it and/or modify
@@ -54,25 +54,32 @@ def main():
 		type=str)
 	arguments = ap.parse_args()
 
+	# Read file
+	try:
+		tg = tgt.read_textgrid(
+				filename=arguments.file,
+				encoding=arguments.encoding)
+	except IOError:
+		print('An error occurred reading file {file}'.
+				format(file=arguments.file))
+	# Create new textgrid
 	if arguments.outfile is None:
 		basename, extension = os.path.splitext(arguments.file)
 		output_filename = basename + '.shifted' + extension
 	else:
 		output_filename = arguments.outfile
-
-	tg = tgt.read_textgrid(
-			filename=arguments.file,
-			encoding=arguments.encoding)
 	tg_shifted = tgt.TextGrid(filename=output_filename)
-
+	# Shift boundaries
 	for tier in tg:
 		ts = tgt.util.shift_boundaries(tier, arguments.shift, 0)
 		tg_shifted.add_tier(ts)
+	# Write file
 	tgt.write_to_file(
 		textgrid=tg_shifted,
 		filename=tg_shifted.filename,
 		format=arguments.format,
 		encoding=arguments.encoding)
+
 
 if __name__ == '__main__':
 	main()
