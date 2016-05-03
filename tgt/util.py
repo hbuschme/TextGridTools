@@ -278,7 +278,7 @@ def communicative_labels(tiers, voc_re=None, silence_re=None):
         speech_tiers = [t.name for t in tiers if re.search(silence_re, t[0].text) is None]
     else:
         if voc_re is None:
-            voc_re = r'[^\s]+',
+            voc_re = r'[^\s]+'
         speech_tiers = [t.name for t in tiers if re.search(voc_re, t[0].text) is not None]
 
     if not speech_tiers:
