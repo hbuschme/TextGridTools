@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-# Extract part of a TextGrid.
+# tgt-extract-part.py - Extract part of a TextGrid.
 # Copyright (C) 2015 Marcin Włodarczak
 # 
 # This program is free software: you can redistribute it and/or modify

@@ -22,12 +22,13 @@ from distutils.core import setup
 setup(
     name='tgt',
     description='TextGridTools -- Read, write, and manipulate Praat TextGrid files',
-    version='1.4.1',
+    version='1.4.2',
     packages=['tgt'],
     scripts=[
     	'scripts/tgt-concatenate-textgrids.py',
         'scripts/tgt-extract-part.py',
     	'scripts/tgt-print-tiernames.py',
+        'scripts/tgt-shift-boundaries.py'
     ],
     maintainer='Hendrik Buschmeier',
     maintainer_email='hbuschme@uni-bielefeld.de',

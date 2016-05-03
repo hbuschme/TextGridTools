@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-# Concatenate Praat TextGrid files.
+# tgt-concatenate-textgrids - Concatenate Praat TextGrid files.
 # Copyright (C) 2011-2016 Marcin Włodarczak, Hendrik Buschmeier
 #
 # This program is free software: you can redistribute it and/or modify

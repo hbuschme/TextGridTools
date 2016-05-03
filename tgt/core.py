@@ -19,6 +19,7 @@
 from __future__ import division
 
 import bisect
+import collections
 import warnings
 import copy
 import math
@@ -55,9 +56,12 @@ class TextGrid(object):
         self._tiers.append(tier)
 
     def add_tiers(self, tiers):
-        '''Add a list of tiers.'''
-        for tier in tiers:
-            self.add_tier(tier)
+        '''Add a sequence of tiers.'''
+        if isinstance(tiers, collections.Sequence):
+            for tier in tiers:
+                self.add_tier(tier)
+        else:
+            raise TextGridToolsException('tiers is not a sequence of Tiers.')
 
     def insert_tier(self, tier, position):
         '''Insert a tier at the specified position.'''
