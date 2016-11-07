@@ -22,7 +22,7 @@ from distutils.core import setup
 setup(
     name='tgt',
     description='TextGridTools -- Read, write, and manipulate Praat TextGrid files',
-    version='1.4.2',
+    version='1.4.3',
     packages=['tgt'],
     scripts=[
     	'scripts/tgt-concatenate-textgrids.py',
