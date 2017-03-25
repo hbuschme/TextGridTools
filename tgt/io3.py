@@ -195,10 +195,11 @@ def read_eaf(filename):
 
         for intr in eaf_tr.iterfind('ANNOTATION/'):
             if intr.tag == 'ALIGNABLE_ANNOTATION':
+                text = intr.find('ANNOTATION_VALUE').text
                 tgt_tier.add_interval(Interval(
                     start_time=time_slots[intr.attrib['TIME_SLOT_REF1']],
                     end_time=time_slots[intr.attrib['TIME_SLOT_REF2']],
-                    text=intr.find('ANNOTATION_VALUE').text))
+                    text=text if text is not None else ''))
             else:
                 raise Exception('Only ALIGNABLE_ANNOTATIONs are supported at the moment')
         tg.add_tier(tgt_tier)
