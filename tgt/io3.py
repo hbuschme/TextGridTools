@@ -44,7 +44,11 @@ def read_textgrid(filename, encoding='utf-8', include_empty_intervals=False):
         stg = [line.strip() for line in f.readlines()
             if line.strip() not in ['', '"']]
     if stg[0] != 'File type = "ooTextFile"':
-        raise Exception(filename)
+        # Check for alternative short TextGrid format
+        if stg[0] == 'File type = "ooTextFile short"' and stg[1] == '"TextGrid"':
+            return read_short_textgrid(filename, stg, include_empty_intervals)
+        else:
+            raise Exception(filename)
     if stg[1] != 'Object class = "TextGrid"':
         raise Exception(filename)
     # Determine the TextGrid format.
