@@ -50,10 +50,9 @@ def read_textgrid(filename, encoding='utf-8', include_empty_intervals=False):
         # solely of a single double quote.
         stg = [line.strip() for line in f.readlines()
             if line.strip() not in ['', '"']]
-    if stg[0] != 'File type = "ooTextFile"':
-        raise Exception(filename)
-    if stg[1] != 'Object class = "TextGrid"':
-        raise Exception(filename)
+    if ((stg[0] != 'File type = "ooTextFile"' or stg[1] != 'Object class = "TextGrid"')
+        and (stg[0] != 'File type = "ooTextFile short"' or stg[1] != '"TextGrid"')):
+        raise Exception('Invalid TextGrid header: {0}\n{1}'.format(stg[0], stg[1]))
     # Determine the TextGrid format.
     if stg[2].startswith('xmin'):
         return read_long_textgrid(filename, stg, include_empty_intervals)
