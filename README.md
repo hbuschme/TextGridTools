@@ -20,7 +20,9 @@ Installation via github (development version)
 
 Buschmeier, H. &amp; Włodarczak, M. (2013). TextGridTools: A TextGrid processing and analysis toolkit for Python. In <em>Proceedings der 24. Konferenz zur Elektronischen Sprachsignalverarbeitung</em>, pp. 152–157, Bielefeld, Germany. [<a href="https://pub.uni-bielefeld.de/download/2561620/2563287">pdf</a>]</p>
 
-The API can be browsed with `pydoc` (e.g., `pydoc tgt.IntervalTier`). Alternatively it is possible to generate documentation with Sphinx in the following way:
+Current documentation can be viewed at https://textgridtools.readthedocs.io/en/stable/.
+
+Alternatively, the API can be browsed with `pydoc` (e.g., `pydoc tgt.IntervalTier`), or documentation can be generated locally, using Sphinx, in the following way:
 
     cd doc
     make html # creates html documentation in doc/build/html/
