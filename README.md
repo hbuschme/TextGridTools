@@ -26,3 +26,13 @@ Alternatively, the API can be browsed with `pydoc` (e.g., `pydoc tgt.IntervalTie
 
     cd doc
     make html # creates html documentation in doc/build/html/
+
+## Citation
+
+To cite TextGridTools in publications, please use (a BibTeX record can be found in the file CITATION):
+
+* Buschmeier, H. & Włodarczak, M. (2013). TextGridTools: A TextGrid processing and analysis toolkit for Python. In _Proceedings der 24. Konferenz zur Elektronischen Sprachsignalverarbeitung_, pp. 152–157, Bielefeld, Germany.
+
+If you want to refer to the specific release you used, do that using its DOI (see the release notes). The DOI of the most recent release is:
+
+[![DOI](https://zenodo.org/badge/1529633.svg)](https://zenodo.org/badge/latestdoi/1529633)
