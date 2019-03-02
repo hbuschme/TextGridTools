@@ -264,15 +264,16 @@ def export_to_long_textgrid(textgrid):
                    '\t\tclass = "{0}"'.format(tier.tier_type()),
                    '\t\tname = "{0}"'.format(escape_text(tier.name)),
                    '\t\txmin = ' + str(tier.start_time),
-                   '\t\txmax = ' + str(tier.end_time),
-                   '\t\tintervals: size = ' + str(len(tier))]
+                   '\t\txmax = ' + str(tier.end_time)]
         if isinstance(tier, IntervalTier):
+            result += ['\t\tintervals: size = ' + str(len(tier))]
             for j, obj in enumerate(tier):
                 result += ['\t\tintervals [{0}]:'.format(j + 1),
                            '\t\t\txmin = ' + str(obj.start_time),
                            '\t\t\txmax = ' + str(obj.end_time),
                            '\t\t\ttext = "' + escape_text(obj.text) + '"']
         elif isinstance(tier, PointTier):
+            result += ['\t\tpoints: size = ' + str(len(tier))]
             for j, obj in enumerate(tier):
                 result += ['\t\tpoints [{0}]:'.format(j + 1),
                            '\t\t\tnumber = ' + str(obj.time),
