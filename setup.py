@@ -44,4 +44,7 @@ setup(
     	'Programming Language :: Python :: 3.5',
     	'Topic :: Scientific/Engineering :: Information Analysis',
     ],
+    install_requires=[
+        'numpy',
+    ],
 )
