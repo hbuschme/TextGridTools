@@ -184,7 +184,7 @@ def include_empty_intervals_in_tier(tier_name, include_empty_intervals):
         raise TypeError('Invalid type of include_empty_intervals: {0}.'.format(type(include_empty_intervals)))
 
 
-def read_eaf(filename):
+def read_eaf(filename, allow_ref_annotations=False, ignore_overlap=False):
     eaf_tree = ET.parse(filename)
 
     time_units = eaf_tree.find('HEADER').attrib['TIME_UNITS']
@@ -194,19 +194,40 @@ def read_eaf(filename):
     tg = TextGrid(filename=filename)
     time_slots = dict((ts.attrib['TIME_SLOT_ID'], float(ts.attrib['TIME_VALUE']) / 1000)
                       for ts in eaf_tree.iterfind('TIME_ORDER/TIME_SLOT'))
+    referable_annotations = dict()
 
     for eaf_tr in eaf_tree.iterfind('TIER'):
         tgt_tier = IntervalTier(name=eaf_tr.attrib['TIER_ID'])
 
         for intr in eaf_tr.iterfind('ANNOTATION/'):
             if intr.tag == 'ALIGNABLE_ANNOTATION':
+                referable_annotations[intr.attrib['ANNOTATION_ID']] = intr
                 text = intr.find('ANNOTATION_VALUE').text
-                tgt_tier.add_interval(Interval(
-                    start_time=time_slots[intr.attrib['TIME_SLOT_REF1']],
-                    end_time=time_slots[intr.attrib['TIME_SLOT_REF2']],
-                    text=text if text is not None else ''))
+                try:
+                    tgt_tier.add_interval(Interval(
+                        start_time=time_slots[intr.attrib['TIME_SLOT_REF1']],
+                        end_time=time_slots[intr.attrib['TIME_SLOT_REF2']],
+                        text=text if text is not None else ''))
+                except ValueError as e:
+                    if ignore_overlap:
+                        print("Ignoring overlapping interval: {}".format(e))
+                    else:
+                        raise e
+            elif allow_ref_annotations and intr.tag == 'REF_ANNOTATION':
+                referent = referable_annotations[intr.attrib['ANNOTATION_REF']]
+                text = intr.find('ANNOTATION_VALUE').text
+                try:
+                    tgt_tier.add_interval(Interval(
+                        start_time=time_slots[referent.attrib['TIME_SLOT_REF1']],
+                        end_time=time_slots[referent.attrib['TIME_SLOT_REF2']],
+                        text=text if text is not None else ''))
+                except ValueError as e:
+                    if ignore_overlap:
+                        print("Ignoring overlapping interval: {}".format(e))
+                    else:
+                        raise e
             else:
-                raise Exception('Only ALIGNABLE_ANNOTATIONs are supported at the moment')
+                raise Exception('Encountered REF_ANNOTATION, currently only ALIGNABLE_ANNOTATIONs enabled.')
         tg.add_tier(tgt_tier)
     return tg
 

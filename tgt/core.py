@@ -203,8 +203,8 @@ class Tier(object):
                 self._objects.insert(position, obj)
             else:
                 raise ValueError(
-                    'Could not add object {0} to this tier: Overlap.'.format(
-                        repr(obj)))
+                    'Could not add object {0} to tier "{1}": Overlap.'.format(
+                        repr(obj), self.name))
 
     def add_annotations(self, objects):
         '''Add a sequence of annotation objects.'''
