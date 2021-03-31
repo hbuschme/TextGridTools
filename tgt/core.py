@@ -107,7 +107,19 @@ class TextGrid(object):
         if result:
             return result
         raise ValueError('Textgrid ' + self.filename +
-                    ' does not have a tier called "' + name + '".')
+                         ' does not have a tier called "' + name + '".')
+
+    def extract_part(self, start, end, time_from_zero=True):
+        '''Trim all tiers between start and end, either resetting all timestamps
+        to start from 0 (the default) or preserving the orignal values.
+        '''
+
+        tg_part = TextGrid()
+
+        for tr in self.tiers:
+            tg_part.add_tier(tr.extract_part(start, end, time_from_zero))
+
+        return tg_part
 
     def _get_earliest_start_time(self):
         '''Return the earliest start time among all tiers.'''
@@ -441,10 +453,37 @@ class Tier(object):
         '''
         self.delete_annotations_with_text(pattern=r'^\s*$', regex=True)
 
+    def extract_part(self, start, end, time_from_zero=True):
+        '''Trim the tier between start and end, either resetting all timestamps
+        to start from 0 (the default) or preserving the orignal values.
+        '''
+
+        intr_part = self.get_annotations_between_timepoints(
+            start, end, left_overlap=True, right_overlap=True)
+
+        if time_from_zero:
+            tier_part = IntervalTier(0, end - start, self.name)
+        else:
+            tier_part = IntervalTier(start, end, self.name)
+
+        for intr in intr_part:
+
+            intr = Interval(max(start, intr.start_time),
+                            min(end, intr.end_time),
+                            intr.text)
+
+            if time_from_zero:
+                intr.start_time = intr.start_time - start
+                intr.end_time = intr.end_time - start
+
+            tier_part.add_annotation(intr)
+
+        return tier_part
+
     def tier_type(self):
         '''Return the type of the tier as a string.'''
         return self.__class__.__name__
-       
+
     def __iter__(self):
         return iter(self._objects)
 
