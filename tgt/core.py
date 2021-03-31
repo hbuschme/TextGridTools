@@ -110,8 +110,9 @@ class TextGrid(object):
                          ' does not have a tier called "' + name + '".')
 
     def extract_part(self, start, end, time_from_zero=True):
-        '''Trim all tiers between start and end, either resetting all timestamps
-        to start from 0 (the default) or preserving the orignal values.
+        '''Return a copy of the TextGrid with all tiers trimmed between start
+        and end, either resetting all timestamps with start as 0 (the
+        default) or preserving the orignal values.
         '''
 
         tg_part = TextGrid()
@@ -454,8 +455,9 @@ class Tier(object):
         self.delete_annotations_with_text(pattern=r'^\s*$', regex=True)
 
     def extract_part(self, start, end, time_from_zero=True):
-        '''Trim the tier between start and end, either resetting all timestamps
-        to start from 0 (the default) or preserving the orignal values.
+        '''Return a copy of the Tier trimmed between start and end, either
+        resetting all timestamps with start as zero (the default) or
+        preserving the orignal values.
         '''
 
         intr_part = self.get_annotations_between_timepoints(
