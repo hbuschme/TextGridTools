@@ -17,6 +17,7 @@
 import copy
 import datetime
 import collections
+import io
 import xml.etree.ElementTree as ET
 
 from .core import TextGrid, IntervalTier, Interval, PointTier, Point, Time
@@ -33,16 +34,20 @@ def deescape_text(text):
 
 
 def read_textgrid(filename, encoding='utf-8', include_empty_intervals=False):
-    '''Read a Praat TextGrid file and return a TextGrid object. 
+    '''Read a Praat TextGrid file and return a TextGrid object.
     If include_empty_intervals is False (the default), empty intervals
     are excluded. If True, they are included. Empty intervals from specific
     tiers can be also included by specifying tier names as a string (for one tier)
     or as a list.'''
-    with open(filename, 'rt', encoding=encoding) as f:
-        # Read whole file into memory ignoring empty lines and lines consisting
-        # solely of a single double quotes.
-        stg = [line.strip() for line in f.readlines()
-            if line.strip() not in ['', '"']]
+    # Reads whole file into memory
+    if isinstance(filename, io.IOBase):
+      lines = filename.readlines()
+    else:
+      with open(filename, 'rt', encoding=encoding) as f:
+        lines = f.readlines()
+
+    # Ignores empty lines and lines consisting solely of a single double quotes.
+    stg = [line.strip() for line in lines if line.strip() not in ['', '"']]
     if ((stg[0] != 'File type = "ooTextFile"' or stg[1] != 'Object class = "TextGrid"')
         and (stg[0] != 'File type = "ooTextFile short"' or stg[1] != '"TextGrid"')):
         raise Exception('Invalid TextGrid header: {0}\n{1}'.format(stg[0], stg[1]))
@@ -72,7 +77,7 @@ def read_short_textgrid(filename, stg, include_empty_intervals=False):
                     Time(stg_extract[i]), # left bound
                     Time(stg_extract[i + 1]), # right bound
                     deescape_text(text)))
-            i += 3               
+            i += 3
         return it
 
     def read_point_tier(stg_extract):
@@ -382,8 +387,11 @@ _EXPORT_FORMATS = {
 
 def write_to_file(textgrid, filename, format='short', encoding='utf-8', **kwargs):
     """Write a TextGrid object to a file in the specified format."""
-    with open(filename, 'w', encoding=encoding) as f:
-        if format in _EXPORT_FORMATS:
-            f.write(_EXPORT_FORMATS[format](textgrid, **kwargs))
-        else:
-            raise Exception('Unknown output format: {0}'.format(format))
+    if format not in _EXPORT_FORMATS:
+      raise Exception('Unknown output format: {0}'.format(format))
+
+    if isinstance(filename, io.IOBase):
+      filename.write(_EXPORT_FORMATS[format](textgrid, **kwargs))
+    else:
+      with open(filename, 'w', encoding=encoding) as f:
+        f.write(_EXPORT_FORMATS[format](textgrid, **kwargs))
