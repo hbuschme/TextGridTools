@@ -62,10 +62,8 @@ def p_textgrid_header(p):
         p[0] = {'start_time': tgt.Time(p[2]), 'end_time': tgt.Time(p[3]), 'n_tiers': int(p[4])}
 
 def p_tiers_list(p):
-    '''tiers_list : tiers_list tier_long
-                  | tiers_list tier_short
-                  | tier_long
-                  | tier_short'''
+    '''tiers_list : tiers_list tier
+                  | tier'''
 
     if len(p) == 2:
         p[0] = [p[1]]
@@ -73,22 +71,20 @@ def p_tiers_list(p):
         p[0] = p[1]
         p[0].append(p[2])
 
-# Long tiers
-    
-def p_tier_long(p):
-    '''tier_long : tier_header_long annotations_list_long'''
+def p_tier(p):
+    '''tier : tier_header_long annotations_list_long
+            | tier_header_short annotations_list_short'''
+
     tier_type = p[1]['class']
     if tier_type == 'IntervalTier':
-        p[0] = tgt.IntervalTier(name=p[1]['name'])
-        for annot in p[2]:
-            p[0].add_interval(tgt.Interval(tgt.Time(annot['xmin']), tgt.Time(annot['xmax']), annot['text']))
+        p[0] = tgt.IntervalTier(name=p[1]['name'], objects=p[2])
     elif tier_type == 'TextTier':
-        p[0] = tgt.PointTier(name=p[1]['name'])
-        for annot in p[2]:
-            p[0].add_point(tgt.Point(tgt.Time(annot['number']), annot['mark']))
+        p[0] = tgt.PointTier(name=p[1]['name'], objects=p[2])
     else:
         ValueError('Unknown tier type: {}'.format(tier_type))
 
+# Long tiers
+    
 def p_tier_header_long(p):
     '''tier_header_long : ITEM_TAG assignments_list'''
     p[0] = p[2]
@@ -105,7 +101,12 @@ def p_annotations_list_long(p):
 
 def p_annotation_long(p):
     '''annotation_long : ANNOTATION_TAG assignments_list'''
-    p[0] = p[2]
+
+    if len(p[2].keys()) == 2:
+        p[0] = tgt.Point(tgt.Time(p[2]['number']), p[2]['mark'])
+    else:
+        p[0] = tgt.Interval(tgt.Time(p[2]['xmin']), tgt.Time(p[2]['xmax']),
+                            p[2]['text'])
 
 def p_assignments_list(p):
     '''assignments_list : assignments_list assignment
@@ -126,19 +127,10 @@ def p_assigment(p):
 
 # Short tiers
 
-def p_tier_short(p):
-    'tier_short : tier_header_short annotations_list_short'
-
-    if p[1]['tier_type'] == 'IntervalTier':
-        p[0] = tgt.IntervalTier(name = p[1]['tier_name'], objects = p[2])
-    elif p[1]['tier_type'] == 'TextTier':
-        p[0] = tgt.PointTier(name = p[1]['tier_name'], objects = p[2])
-    else:
-        raise ValueError('Unknown tier type: {}'.format(p[0][tier_type]))
-
 def p_tier_header_short(p):
     'tier_header_short : QUOTED_STRING QUOTED_STRING NUMERIC NUMERIC NUMERIC'
-    p[0] = {'tier_type': p[1], 'tier_name': p[2], 'start_time': tgt.Time(p[3]), 'end_time': tgt.Time(p[4]), 'n_annotations': int(p[5])}
+    p[0] = {'class': p[1], 'name': p[2], 'start_time': tgt.Time(p[3]),
+            'end_time': tgt.Time(p[4]), 'n_annotations': int(p[5])}
 
 def p_annotations_list_short(p):
     '''annotations_list_short : annotation_short annotations_list_short
