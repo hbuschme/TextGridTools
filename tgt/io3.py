@@ -38,7 +38,7 @@ def read_textgrid(filename, encoding='utf-8', include_empty_intervals=False):
     If include_empty_intervals is False (the default), empty intervals
     are excluded. If True, they are included. Empty intervals from specific
     tiers can be also included by specifying tier names as a string (for one tier)
-    or as a list.'''
+    or as a list. `filename` can be either a file path or a file handler.'''
     # Reads whole file into memory
     if isinstance(filename, io.IOBase):
       lines = filename.readlines()
@@ -386,7 +386,9 @@ _EXPORT_FORMATS = {
 
 
 def write_to_file(textgrid, filename, format='short', encoding='utf-8', **kwargs):
-    """Write a TextGrid object to a file in the specified format."""
+    """Write a TextGrid object to a file in the specified format.
+
+    `filename` can be either a file path or a file handler."""
     if format not in _EXPORT_FORMATS:
       raise Exception('Unknown output format: {0}'.format(format))
 
