@@ -19,12 +19,15 @@
 from __future__ import division
 
 import bisect
-import collections
 import warnings
 import copy
 import math
 import operator
 import re
+try:
+    from collections.abc import Sequence
+except ImportError:
+    from collections import Sequence
 
 
 __all__ = [
@@ -57,7 +60,7 @@ class TextGrid(object):
 
     def add_tiers(self, tiers):
         '''Add a sequence of tiers.'''
-        if isinstance(tiers, collections.Sequence):
+        if isinstance(tiers, Sequence):
             for tier in tiers:
                 self.add_tier(tier)
         else:
