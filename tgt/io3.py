@@ -38,7 +38,7 @@ def read_textgrid(filename, encoding='utf-8', include_empty_intervals=False):
     If include_empty_intervals is False (the default), empty intervals
     are excluded. If True, they are included. Empty intervals from specific
     tiers can be also included by specifying tier names as a string (for one tier)
-    or as a list. `filename` can be either a file path or a file handler.'''
+    or as a list. `filename` can be either a file path or a file object.'''
     # Reads whole file into memory
     if isinstance(filename, io.IOBase):
       lines = filename.readlines()
