@@ -388,7 +388,7 @@ _EXPORT_FORMATS = {
 def write_to_file(textgrid, filename, format='short', encoding='utf-8', **kwargs):
     """Write a TextGrid object to a file in the specified format.
 
-    `filename` can be either a file path or a file handler."""
+    `filename` can be either a file path or a file object."""
     if format not in _EXPORT_FORMATS:
       raise Exception('Unknown output format: {0}'.format(format))
 
