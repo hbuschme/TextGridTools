@@ -2,7 +2,7 @@
 
 Read, write, and manipulate Praat TextGrid files with Python
 
-Copyright (C) 2011-2016 Hendrik Buschmeier, Marcin Włodarczak
+Copyright (C) 2011-2023 Hendrik Buschmeier, Marcin Włodarczak
 
 ## Installation
 
