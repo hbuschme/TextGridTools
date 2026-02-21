@@ -2,6 +2,7 @@
 
 import ply.lex as lex
 import ply.yacc as yacc
+import re
 import tgt
 
 
@@ -15,7 +16,8 @@ tokens = [
     'VAR',
     'SIZE',
     'ITEM_TAG',
-    'ANNOTATION_TAG'
+    'ANNOTATION_TAG',
+    'TIER_TYPE'
 ]
 
 t_FILETYPE = r'File\stype\s=\s"ooTextFile"\nObject\sclass\s=\s"TextGrid"'
@@ -26,6 +28,7 @@ t_ignore  = '\n\t '
 t_ignore_EXISTS = r'(tiers\?\s+)?<exists>'
 t_ITEM_TAG = r'item\s+\[\d*\]:'
 t_ANNOTATION_TAG = r'(intervals|points)\s+\[\d*\]:'
+t_TIER_TYPE = r'(class\s*=\s*)?"(Interval|Text)Tier"'
 
 
 def t_SIZE(t):
@@ -35,8 +38,11 @@ def t_SIZE(t):
     
 
 def t_QUOTED_STRING(t):
-    r'("[^"]*")|(\'[^[\']*\')'
-    t.value = t.value.strip('\n\"\'')
+    r'".*"'
+    # Remove the (outer) quotes
+    t.value = t.value[1:-1]
+    # Unescape double quotes.
+    t.value = t.value.replace('""', '"')
     return t
 
 def t_error(t):
@@ -81,13 +87,14 @@ def p_tier(p):
     elif tier_type == 'TextTier':
         p[0] = tgt.PointTier(name=p[1]['name'], objects=p[2])
     else:
-        ValueError('Unknown tier type: {}'.format(tier_type))
+        raise ValueError('Unknown tier type: {}'.format(tier_type))
 
 # Long tiers
     
 def p_tier_header_long(p):
-    '''tier_header_long : ITEM_TAG assignments_list'''
-    p[0] = p[2]
+    '''tier_header_long : ITEM_TAG TIER_TYPE assignments_list'''
+    p[0] = p[3]
+    p[0]['class'] = re.search(r'(Text|Interval)Tier', p[2]).group(0)
 
 def p_annotations_list_long(p):
     '''annotations_list_long : annotations_list_long annotation_long
@@ -117,7 +124,6 @@ def p_assignments_list(p):
     else:
         p[0] = p[1]
         p[0].update(p[2])
-    
 
 def p_assigment(p):
     '''assignment : VAR EQ NUMERIC
@@ -128,9 +134,15 @@ def p_assigment(p):
 # Short tiers
 
 def p_tier_header_short(p):
-    'tier_header_short : QUOTED_STRING QUOTED_STRING NUMERIC NUMERIC NUMERIC'
-    p[0] = {'class': p[1], 'name': p[2], 'start_time': tgt.Time(p[3]),
-            'end_time': tgt.Time(p[4]), 'n_annotations': int(p[5])}
+    'tier_header_short : TIER_TYPE QUOTED_STRING NUMERIC NUMERIC NUMERIC'
+    p[0] = {
+        'class': re.search(r'(Text|Interval)Tier', p[1]).group(0),
+        'name': p[2],
+        'start_time': tgt.Time(p[3]),
+        'end_time': tgt.Time(p[4]),
+        'n_annotations': int(p[5]),
+        }
+
 
 def p_annotations_list_short(p):
     '''annotations_list_short : annotation_short annotations_list_short
@@ -172,4 +184,5 @@ def parse(path):
         print()
 
 parse('test_long.TextGrid')
-parse('test_short.TextGrid')
+# parse('test_short.TextGrid')
+# parse('test_quoted.TextGrid')

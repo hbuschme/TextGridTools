@@ -8,8 +8,7 @@ size = 2
 item []: 
     item [1]:
         class = "IntervalTier" 
-        name = "a
-	" 
+        name = "a" 
         xmin = 0 
         xmax = 3.813877551020408 
         intervals: size = 6 
@@ -20,7 +19,9 @@ item []:
         intervals [2]:
             xmin = 0.3558412624531997 
             xmax = 0.895629547447449 
-            text = "x" 
+            text = "x
+
+." 
         intervals [3]:
             xmin = 0.895629547447449 
             xmax = 1.5084480121762145 
