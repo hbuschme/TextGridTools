@@ -24,11 +24,14 @@ t_FILETYPE = r'File\stype\s=\s"ooTextFile"\nObject\sclass\s=\s"TextGrid"'
 t_EQ = '='
 t_NUMERIC = r'\d+(\.\d+)?'
 t_VAR = r'\w+'
-t_ignore  = '\n\t '
+t_ignore  = '\t '
 t_ignore_EXISTS = r'(tiers\?\s+)?<exists>'
 t_ITEM_TAG = r'item\s+\[\d*\]:'
 t_ANNOTATION_TAG = r'(intervals|points)\s+\[\d*\]:'
-t_TIER_TYPE = r'(class\s*=\s*)?"(Interval|Text)Tier"'
+
+def t_TIER_TYPE(t):
+    r'(class\s*=\s*)?"(Interval|Text)Tier"'
+    return t
 
 
 def t_SIZE(t):
@@ -46,8 +49,14 @@ def t_QUOTED_STRING(t):
     return t
 
 def t_error(t):
-    print("Illegal character '%s'" % t.value[0])
+    lineno = t.lexer.lineno + 1
+    print(f"Illegal character '{t.value[0]}' on line {lineno}")
     t.lexer.skip(1)
+
+# Define a rule so we can track line numbers
+def t_newline(t):
+    r'\n+'
+    t.lexer.lineno += len(t.value)
 
 
 # Grammar
@@ -164,25 +173,26 @@ def p_annotation_short(p):
 
 
 def p_error(p):
-    print("Syntax error in input!")
+    lineno = parser.token().lineno + 1
+    raise SyntaxError(f"Syntax error in input on line {lineno}.")
 
 # Test
 
+lexer = lex.lex()
+parser = yacc.yacc()
+
 def parse(path):
     
-
     with open(path) as f:
         tg = f.read()
-    lexer = lex.lex()
     lexer.input(tg)
 
-    parser = yacc.yacc()
     res = parser.parse(tg)
 
     for t in res:
         print(t)
         print()
 
-parse('test_long.TextGrid')
-# parse('test_short.TextGrid')
+# parse('test_long.TextGrid')
+parse('test_short.TextGrid')
 # parse('test_quoted.TextGrid')
