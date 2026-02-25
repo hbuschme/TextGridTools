@@ -38,7 +38,7 @@ def t_SIZE(t):
     
 
 def t_QUOTED_STRING(t):
-    r'".*"'
+    r'"([^"]|"")*"'
     # Remove the (outer) quotes
     t.value = t.value[1:-1]
     # Unescape double quotes.
